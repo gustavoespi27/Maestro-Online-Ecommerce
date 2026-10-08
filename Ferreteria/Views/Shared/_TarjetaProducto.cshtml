@@ -1,0 +1,60 @@
+@model Producto
+<article class="card tarjeta-producto h-100" data-producto>
+    <a asp-area="" asp-controller="Productos" asp-action="Detalle" asp-route-id="@Model.Id" class="contenedor-imagen" aria-label="Ver @Model.Nombre">
+        <img src="@(Model.ImagenUrl ?? "/img/productos/sin-imagen.svg")" alt="@Model.Nombre@(string.IsNullOrEmpty(Model.Marca) ? "" : " " + Model.Marca)"
+             loading="lazy" decoding="async" width="400" height="400" />
+        <span class="etiquetas">
+            @if (Model.Stock == 0)
+            {
+                <span class="etiqueta etiqueta-agotado">Agotado</span>
+            }
+            else
+            {
+                @if (Model.EnOferta)
+                {
+                    <span class="etiqueta etiqueta-descuento">-@Model.PorcentajeDescuento%</span>
+                }
+                @if (Model.Destacado)
+                {
+                    <span class="etiqueta etiqueta-hot">★ Top ventas</span>
+                }
+                @if (Model.StockBajo)
+                {
+                    <span class="etiqueta etiqueta-ultimas">Últimas unidades</span>
+                }
+            }
+        </span>
+        <span class="ver-rapido">Ver detalle</span>
+    </a>
+    <div class="card-body d-flex flex-column">
+        @if (!string.IsNullOrEmpty(Model.Marca))
+        {
+            <div class="marca">@Model.Marca</div>
+        }
+        <h3 class="nombre-producto">
+            <a asp-area="" asp-controller="Productos" asp-action="Detalle" asp-route-id="@Model.Id">@Model.Nombre</a>
+        </h3>
+        <div class="mt-auto">
+            @if (Model.EnOferta)
+            {
+                <div class="precio-antes">@Model.PrecioAnterior!.Value.Clp()</div>
+            }
+            <div class="precio @(Model.EnOferta ? "en-oferta" : "")">@Model.Precio.Clp()</div>
+        </div>
+        <form asp-area="" asp-controller="Carrito" asp-action="Agregar" method="post" class="mt-2" data-agregar-carrito>
+            <input type="hidden" name="productoId" value="@Model.Id" />
+            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+            <button type="submit" class="btn btn-naranja w-100 btn-sm boton-agregar py-2" disabled="@(Model.Stock == 0)">
+                @if (Model.Stock == 0)
+                {
+                    <text>Sin stock</text>
+                }
+                else
+                {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /><path d="M2 3h3l2.7 12.4a1.5 1.5 0 0 0 1.5 1.1h8.9a1.5 1.5 0 0 0 1.4-1.1L21.5 8H6.2" /></svg>
+                    <text>Agregar</text>
+                }
+            </button>
+        </form>
+    </div>
+</article>

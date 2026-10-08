@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Pasarela de pago (simulada)";
+    int monto = ViewBag.Monto;
+}
+
+<div class="container my-4" style="max-width:480px">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between">
+            <strong>Pasarela de pago de prueba</strong>
+            <span class="badge bg-warning text-dark">MODO SIMULADO</span>
+        </div>
+        <div class="card-body">
+            <p class="small text-muted mb-3">
+                Esta pantalla reemplaza a Webpay cuando <code>Pagos:Modo</code> es <code>"Simulado"</code>
+                (útil para presentar sin internet). No se ingresan datos de tarjeta reales.
+            </p>
+            <dl class="row small">
+                <dt class="col-5">Comercio</dt><dd class="col-7">El Maestro Online</dd>
+                <dt class="col-5">Orden de compra</dt><dd class="col-7">@ViewBag.Orden</dd>
+                <dt class="col-5">Monto a pagar</dt><dd class="col-7 fw-bold">@monto.Clp()</dd>
+            </dl>
+            <form method="post" asp-action="Simulador">
+                <input type="hidden" name="token_ws" value="@ViewBag.Token" />
+                <div class="d-grid gap-2">
+                    <button name="accion" value="aprobar" class="btn btn-success">Aprobar pago</button>
+                    <button name="accion" value="rechazar" class="btn btn-outline-danger">Simular rechazo del banco</button>
+                    <button name="accion" value="anular" class="btn btn-link text-secondary">Anular y volver al comercio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

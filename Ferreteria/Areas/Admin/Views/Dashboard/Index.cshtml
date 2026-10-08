@@ -1,0 +1,121 @@
+@model DashboardVM
+@{
+    ViewData["Title"] = "Resumen";
+    var maxDia = Math.Max(1, Model.VentasUltimos7Dias.Max(v => v.Monto));
+}
+
+<h1 class="h3 mb-4">Resumen</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3"><div class="kpi"><span>Ventas del mes</span><strong>@Model.VentasMes.Clp()</strong><small>@Model.PedidosPagadosMes pedidos pagados</small></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="kpi"><span>Ventas históricas</span><strong>@Model.VentasTotales.Clp()</strong><small>&nbsp;</small></div></div>
+    <div class="col-sm-6 col-xl-3">
+        <a class="kpi kpi-enlace" asp-controller="Pedidos" asp-action="Index" asp-route-estado="@EstadoPedido.Pagado">
+            <span>Pedidos por preparar</span><strong>@Model.PedidosPorPreparar</strong><small>pagados o en preparación</small>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3"><div class="kpi"><span>Catálogo / clientes</span><strong>@Model.TotalProductos / @Model.TotalClientes</strong><small>productos activos / clientes</small></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 fw-bold mb-3">Ventas de los últimos 7 días</h2>
+                <div class="grafico-barras">
+                    @foreach (var (dia, monto) in Model.VentasUltimos7Dias)
+                    {
+                        var alto = (int)Math.Round(monto * 100.0 / maxDia);
+                        <div class="columna" title="@dia.ToString("dd-MM"): @monto.Clp()">
+                            <div class="valor small">@(monto > 0 ? monto.Clp() : "")</div>
+                            <div class="barra" style="height:@(Math.Max(alto, 2))%"></div>
+                            <div class="etiqueta-dia small">@dia.ToString("ddd dd")</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 fw-bold mb-3">Más vendidos</h2>
+                @if (!Model.MasVendidos.Any())
+                {
+                    <p class="text-muted small">Aún no hay ventas.</p>
+                }
+                else
+                {
+                    <table class="table table-sm small mb-0">
+                        <thead><tr><th>Producto</th><th class="text-end">Unid.</th><th class="text-end">Monto</th></tr></thead>
+                        <tbody>
+                            @foreach (var (nombre, unidades, monto) in Model.MasVendidos)
+                            {
+                                <tr><td>@nombre</td><td class="text-end">@unidades</td><td class="text-end">@monto.Clp()</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <h2 class="h6 fw-bold mb-0">Últimos pedidos</h2>
+                    <a class="small" asp-controller="Pedidos" asp-action="Index">Ver todos</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm small align-middle mb-0">
+                        <thead><tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Estado</th><th class="text-end">Total</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in Model.UltimosPedidos)
+                            {
+                                <tr>
+                                    <td><a asp-controller="Pedidos" asp-action="Detalle" asp-route-id="@p.Id">@p.OrdenCompra</a></td>
+                                    <td>@(p.Usuario?.NombreCompleto ?? p.NombreReceptor + " (invitado)")</td>
+                                    <td>@p.Fecha.ToString("dd-MM HH:mm")</td>
+                                    <td><partial name="_EstadoPedido" model="p.Estado" /></td>
+                                    <td class="text-end">@p.Total.Clp()</td>
+                                </tr>
+                            }
+                            @if (!Model.UltimosPedidos.Any())
+                            {
+                                <tr><td colspan="5" class="text-muted">Sin pedidos todavía.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <h2 class="h6 fw-bold mb-0">Stock bajo</h2>
+                    <a class="small" asp-controller="Productos" asp-action="Index" asp-route-stockBajo="true">Ver todos</a>
+                </div>
+                <table class="table table-sm small mb-0">
+                    <tbody>
+                        @foreach (var p in Model.StockBajo)
+                        {
+                            <tr>
+                                <td><a asp-controller="Productos" asp-action="Editar" asp-route-id="@p.Id">@p.Nombre</a></td>
+                                <td class="text-end"><span class="badge @(p.Stock == 0 ? "bg-danger" : "bg-warning text-dark")">@p.Stock unid.</span></td>
+                            </tr>
+                        }
+                        @if (!Model.StockBajo.Any())
+                        {
+                            <tr><td class="text-muted">Todo el stock está sobre el mínimo.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

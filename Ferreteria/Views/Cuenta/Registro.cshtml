@@ -1,0 +1,71 @@
+@model RegistroVM
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<div class="container my-4" style="max-width:560px">
+    <div class="card tarjeta-formulario">
+        <div class="cabecera">
+            <img src="~/img/logo.svg" alt="" width="56" height="56" class="mb-2" />
+            <h1 class="h4 fw-bold mb-1">Crear cuenta</h1>
+            <p class="small mb-0" style="color:rgba(255,255,255,.7)">Únete y compra más rápido en tu próxima obra</p>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Registro" method="post">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="NombreCompleto" class="form-label"></label>
+                        <input asp-for="NombreCompleto" class="form-control" autocomplete="name" />
+                        <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Rut" class="form-label"></label>
+                        <input asp-for="Rut" class="form-control" placeholder="12345678-9" />
+                        <span asp-validation-for="Rut" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Telefono" class="form-label"></label>
+                        <input asp-for="Telefono" class="form-control" placeholder="+56 9 1234 5678" autocomplete="tel" />
+                        <span asp-validation-for="Telefono" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmarPassword" class="form-label"></label>
+                        <input asp-for="ConfirmarPassword" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmarPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="AceptaTerminos" id="AceptaTerminos" value="true" checked="@Model.AceptaTerminos" required />
+                            <label class="form-check-label small" for="AceptaTerminos">
+                                Acepto los <a asp-controller="Info" asp-action="Terminos" target="_blank">Términos y Condiciones</a> y la
+                                <a asp-controller="Info" asp-action="Privacidad" target="_blank">Política de Privacidad</a>.
+                            </label>
+                        </div>
+                        <span asp-validation-for="AceptaTerminos" class="text-danger small d-block"></span>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="AceptaComunicaciones" id="AceptaComunicaciones" value="true" checked="@Model.AceptaComunicaciones" />
+                            <label class="form-check-label small" for="AceptaComunicaciones">Quiero recibir ofertas y novedades por correo (opcional, puedes cambiarlo cuando quieras).</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-naranja btn-lg w-100 mt-4">Crear cuenta</button>
+            </form>
+            <hr />
+            <p class="small mb-0 text-center">¿Ya tienes cuenta? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Ingresa aquí</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

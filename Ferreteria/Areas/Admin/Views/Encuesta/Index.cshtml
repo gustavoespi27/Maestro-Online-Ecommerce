@@ -1,0 +1,223 @@
+@model List<RespuestaEncuesta>
+@{
+    ViewData["Title"] = "Encuesta UTAUT";
+    const int meta = 30;
+    var n = Model.Count;
+    var cl = System.Globalization.CultureInfo.GetCultureInfo("es-CL");
+
+    double Media(IEnumerable<double> xs) { var l = xs.ToList(); return l.Count == 0 ? 0 : l.Average(); }
+    double Varianza(IEnumerable<double> xs) { var l = xs.ToList(); if (l.Count < 2) return 0; var m = l.Average(); return l.Sum(x => (x - m) * (x - m)) / (l.Count - 1); }
+    double Pearson(List<double> a, List<double> b)
+    {
+        if (a.Count < 3) return double.NaN;
+        double ma = a.Average(), mb = b.Average();
+        double num = a.Zip(b, (x, y) => (x - ma) * (y - mb)).Sum();
+        double den = Math.Sqrt(a.Sum(x => (x - ma) * (x - ma)) * b.Sum(y => (y - mb) * (y - mb)));
+        return den == 0 ? double.NaN : num / den;
+    }
+    // Alfa de Cronbach: confiabilidad interna de los ítems de cada constructo
+    double Cronbach(ConstructoUtaut c)
+    {
+        var k = c.Items.Length;
+        if (n < 2 || k < 2) return double.NaN;
+        var sumaVarItems = c.Items.Sum(i => Varianza(Model.Select(r => (double)EncuestaUtaut.Valor(r, i.Codigo))));
+        var varTotal = Varianza(Model.Select(r => c.Items.Sum(i => (double)EncuestaUtaut.Valor(r, i.Codigo))));
+        return varTotal == 0 ? double.NaN : (double)k / (k - 1) * (1 - sumaVarItems / varTotal);
+    }
+    string Nivel(double m) => m >= 4 ? "alta" : m >= 3 ? "moderada" : "baja";
+    string F(double x, string formato = "0.00") => double.IsNaN(x) ? "—" : x.ToString(formato, cl);
+
+    var iu = EncuestaUtaut.Constructos.First(c => c.Sigla == "IU");
+    var puntajesIU = Model.Select(r => EncuestaUtaut.Promedio(r, iu)).ToList();
+    var resumen = EncuestaUtaut.Constructos.Select(c => new
+    {
+        C = c,
+        Media = Media(Model.Select(r => EncuestaUtaut.Promedio(r, c))),
+        Alfa = Cronbach(c),
+        RconIU = c.Sigla == "IU" ? double.NaN : Pearson(Model.Select(r => EncuestaUtaut.Promedio(r, c)).ToList(), puntajesIU),
+        Acuerdo = n == 0 ? 0 : 100.0 * Model.Count(r => EncuestaUtaut.Promedio(r, c) >= 4) / n
+    }).ToList();
+    var predictores = resumen.Where(x => x.C.Sigla != "IU" && !double.IsNaN(x.RconIU)).OrderByDescending(x => x.RconIU).ToList();
+
+    List<(string Etiqueta, int Cantidad)> Distribucion(Func<RespuestaEncuesta, string?> campo, string[] opciones) =>
+        opciones.Select(o => (o, Model.Count(r => campo(r) == o))).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-0">Encuesta de aceptación tecnológica (UTAUT)</h1>
+        <div class="text-muted small">Instrumento basado en Venkatesh et al. (2003). Escala Likert 1 a 5.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-area="" asp-controller="Encuesta" asp-action="Index" target="_blank">Abrir encuesta ↗</a>
+        <a class="btn btn-naranja" asp-action="Exportar">⬇ Descargar Excel (CSV)</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="kpi">
+            <span>Respuestas</span>
+            <strong>@n <small class="fs-6">/ @meta</small></strong>
+            <div class="progreso-despacho mt-2"><div style="width:@(Math.Min(100, n * 100 / meta))%"></div></div>
+            <small class="mt-1">@(n >= meta ? "✔ Meta de la rúbrica cumplida" : $"Faltan {meta - n} para la meta de la rúbrica")</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <span>Intención de uso promedio</span>
+            <strong>@F(resumen.First(x => x.C.Sigla == "IU").Media) <small class="fs-6">/ 5</small></strong>
+            <small>@(n == 0 ? "Sin datos" : $"Aceptación {Nivel(resumen.First(x => x.C.Sigla == "IU").Media)}")</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi">
+            <span>Mejor predictor de la intención</span>
+            <strong class="fs-5">@(predictores.FirstOrDefault()?.C.Nombre ?? "—")</strong>
+            <small>@(predictores.Any() ? $"r = {F(predictores[0].RconIU)} con Intención de Uso" : "Se calcula con 3 o más respuestas")</small>
+        </div>
+    </div>
+</div>
+
+@if (n == 0)
+{
+    <div class="alert alert-info">
+        Aún no hay respuestas. Comparte el enlace <strong>@($"{Context.Request.Scheme}://{Context.Request.Host}/Encuesta")</strong> con al menos @meta usuarios potenciales
+        (para que otras personas puedan entrar, el sitio debe estar publicado o en la misma red).
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h6 fw-bold">Gráfico 1. Promedio por constructo UTAUT (1 a 5)</h2>
+                @foreach (var x in resumen)
+                {
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="chip-constructo" style="min-width:2.6rem;text-align:center">@x.C.Sigla</span>
+                        <div class="flex-grow-1">
+                            <div class="small">@x.C.Nombre</div>
+                            <div class="barra-resultado"><div style="width:@((x.Media / 5 * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture))%">@F(x.Media)</div></div>
+                        </div>
+                    </div>
+                }
+            </div></div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h6 fw-bold">Tabla 1. Resumen e interpretación</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm small align-middle mb-2">
+                        <thead><tr><th>Constructo</th><th class="text-end">Media</th><th class="text-end">% acuerdo</th><th class="text-end">α</th><th class="text-end">r con IU</th></tr></thead>
+                        <tbody>
+                            @foreach (var x in resumen)
+                            {
+                                <tr>
+                                    <td>@x.C.Sigla</td>
+                                    <td class="text-end">@F(x.Media)</td>
+                                    <td class="text-end">@x.Acuerdo.ToString("0", cl)%</td>
+                                    <td class="text-end @(x.Alfa >= 0.7 ? "text-success" : "text-warning")">@F(x.Alfa)</td>
+                                    <td class="text-end">@F(x.RconIU)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-0">
+                    <strong>% acuerdo</strong>: personas con promedio ≥ 4. <strong>α</strong> (alfa de Cronbach): confiabilidad de los ítems; ≥ 0,70 es aceptable.
+                    <strong>r con IU</strong>: correlación de Pearson con la Intención de Uso; indica qué constructo se relaciona más con la disposición a usar el sitio.
+                </p>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card mb-4"><div class="card-body">
+        <h2 class="h6 fw-bold">Interpretación automática (borrador para el informe)</h2>
+        <ul class="small mb-0">
+            @foreach (var x in resumen)
+            {
+                <li><strong>@x.C.Nombre (@x.C.Sigla):</strong> media @F(x.Media) → aceptación @Nivel(x.Media); el @x.Acuerdo.ToString("0", cl)% de los encuestados está de acuerdo o muy de acuerdo. @x.C.Descripcion</li>
+            }
+            @if (predictores.Any())
+            {
+                <li>
+                    El constructo con mayor relación con la intención de uso es <strong>@predictores[0].C.Nombre</strong> (r = @F(predictores[0].RconIU))
+                    @if (predictores.Count > 1) { <text>, seguido de <strong>@predictores[1].C.Nombre</strong> (r = @F(predictores[1].RconIU))</text> }.
+                    Esto sugiere priorizar las mejoras del sitio en esa dimensión.
+                </li>
+            }
+        </ul>
+    </div></div>
+
+    <div class="card mb-4"><div class="card-body">
+        <h2 class="h6 fw-bold">Gráfico 2. Distribución de respuestas por ítem</h2>
+        <div class="d-flex flex-wrap gap-3 small mb-3">
+            @for (var v = 1; v <= 5; v++) { <span><span class="likert-@v d-inline-block rounded" style="width:12px;height:12px"></span> @v · @EncuestaUtaut.Escala[v - 1]</span> }
+        </div>
+        @foreach (var c in EncuestaUtaut.Constructos)
+        {
+            @foreach (var item in c.Items)
+            {
+                var conteos = Enumerable.Range(1, 5).Select(v => Model.Count(r => EncuestaUtaut.Valor(r, item.Codigo) == v)).ToArray();
+                <div class="mb-2">
+                    <div class="small"><span class="chip-constructo">@item.Codigo</span> @item.Texto</div>
+                    <div class="apilada mt-1">
+                        @for (var v = 1; v <= 5; v++)
+                        {
+                            if (conteos[v - 1] == 0) { continue; }
+                            var pct = 100.0 * conteos[v - 1] / n;
+                            <div class="likert-@v" style="width:@pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%" title="@conteos[v - 1] respuestas (@pct.ToString("0", cl)%)">@(pct >= 8 ? pct.ToString("0", cl) + "%" : "")</div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div></div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var (titulo, datos) in new[]
+        {
+            ("Gráfico 3. Edad", Distribucion(r => r.RangoEdad, EncuestaUtaut.RangosEdad)),
+            ("Gráfico 4. Frecuencia de compra online", Distribucion(r => r.FrecuenciaCompraOnline, EncuestaUtaut.Frecuencias)),
+            ("Gráfico 5. Perfil del encuestado", Distribucion(r => r.Perfil, EncuestaUtaut.Perfiles)),
+        })
+        {
+            var max = Math.Max(1, datos.Max(d => d.Cantidad));
+            <div class="col-md-4">
+                <div class="card h-100"><div class="card-body">
+                    <h2 class="h6 fw-bold">@titulo</h2>
+                    @foreach (var d in datos)
+                    {
+                        <div class="small d-flex justify-content-between"><span>@d.Etiqueta</span><span>@d.Cantidad (@((100.0 * d.Cantidad / n).ToString("0", cl))%)</span></div>
+                        <div class="progreso-despacho mb-2"><div style="width:@(d.Cantidad * 100 / max)%"></div></div>
+                    }
+                </div></div>
+            </div>
+        }
+    </div>
+
+    @if (Model.Any(r => !string.IsNullOrWhiteSpace(r.Comentario)))
+    {
+        <div class="card mb-4"><div class="card-body">
+            <h2 class="h6 fw-bold">Comentarios de los encuestados</h2>
+            <ul class="small mb-0">
+                @foreach (var r in Model.Where(r => !string.IsNullOrWhiteSpace(r.Comentario)))
+                {
+                    <li>"@r.Comentario" <span class="text-muted">(@r.Fecha.ToString("dd-MM-yyyy"))</span></li>
+                }
+            </ul>
+        </div></div>
+    }
+}
+
+<div class="card"><div class="card-body small">
+    <h2 class="h6 fw-bold">Instrumento aplicado (ítems por constructo)</h2>
+    @foreach (var c in EncuestaUtaut.Constructos)
+    {
+        <div class="mb-2">
+            <strong>@c.Sigla · @c.Nombre</strong> <span class="text-muted">— @c.Descripcion</span>
+            <ul class="mb-0">@foreach (var i in c.Items) { <li><strong>@i.Codigo</strong>: @i.Texto</li> }</ul>
+        </div>
+    }
+</div></div>

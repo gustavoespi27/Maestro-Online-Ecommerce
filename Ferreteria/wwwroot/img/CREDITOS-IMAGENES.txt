@@ -1,0 +1,36 @@
+Imágenes de Wikimedia Commons (licencias libres). Archivo | Fuente | Licencia | URL
+productos/hm-001.jpg | File:Claw hammer 2.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Claw_hammer_2.jpg
+productos/hm-002.jpg | File:Screwdriver set with great variety of bits and ratchet screwdriver.jpg | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Screwdriver_set_with_great_variety_of_bits_and_ratchet_screwdriver.jpg
+productos/hm-003.jpg | File:2023 Kombinerki (1).jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:2023_Kombinerki_(1).jpg
+productos/hm-004.jpg | File:B&Q Tape Measure.jpg | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:B%26Q_Tape_Measure.jpg
+productos/hm-005.jpg | File:2023 Klucz nastawny.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:2023_Klucz_nastawny.jpg
+productos/he-001.jpg | File:Bosch PSB 550 RE drill.JPG | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Bosch_PSB_550_RE_drill.JPG
+productos/he-002.jpg | File:Makita 18v electric drill (1).jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Makita_18v_electric_drill_(1).jpg
+productos/he-003.jpg | File:2 الحداد.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:2_%D8%A7%D9%84%D8%AD%D8%AF%D8%A7%D8%AF.jpg
+productos/he-004.jpg | File:DeWalt circular saw in use.jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:DeWalt_circular_saw_in_use.jpg
+productos/pi-001.jpg | File:Paint bucket and brush.jpg | CC0 | https://commons.wikimedia.org/wiki/File:Paint_bucket_and_brush.jpg
+productos/pi-002.jpg | File:001- PINTURAS TITANLUX - ESMALTE BRILLANTE.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:001-_PINTURAS_TITANLUX_-_ESMALTE_BRILLANTE.jpg
+productos/pi-003.jpg | File:Paint-roller (23956075297).jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Paint-roller_(23956075297).jpg
+productos/pi-004.jpg | File:Paint brushes (30804).jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Paint_brushes_(30804).jpg
+productos/ga-001.jpg | File:Ball Valve.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ball_Valve.jpg
+productos/ga-002.jpg | File:Thread seal tape.jpg | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Thread_seal_tape.jpg
+productos/ga-003.jpg | File:Man tests kitchen faucet at home improvement store in modern showroom setting.jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Man_tests_kitchen_faucet_at_home_improvement_store_in_modern_showroom_setting.jpg
+productos/el-001.jpg | File:Blue Grass Chemical Agent-Destruction Pilot Plant Electrical Cable Reels (4706172583).jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Blue_Grass_Chemical_Agent-Destruction_Pilot_Plant_Electrical_Cable_Reels_(4706172583).jpg
+productos/el-002.jpg | File:LED bulbs.jpg | CC BY 3.0 | https://commons.wikimedia.org/wiki/File:LED_bulbs.jpg
+productos/el-003.jpg | File:Power outlet on TH Liner.jpg | CC0 | https://commons.wikimedia.org/wiki/File:Power_outlet_on_TH_Liner.jpg
+productos/fi-001.jpg | File:Black wood screw with flat Phillips head.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Black_wood_screw_with_flat_Phillips_head.jpg
+productos/fi-002.jpg | File:Cluster-2.jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Cluster-2.jpg
+productos/fi-003.jpg | File:Wall plugs plastic.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Wall_plugs_plastic.jpg
+productos/co-001.jpg | File:Portland cement CEM I 42,5 R (bag).jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Portland_cement_CEM_I_42,5_R_(bag).jpg
+productos/co-002.jpg | File:Trowels of various sizes and shapes, square notch trowels, in German hardware store (cropped).jpg | CC0 | https://commons.wikimedia.org/wiki/File:Trowels_of_various_sizes_and_shapes,_square_notch_trowels,_in_German_hardware_store_(cropped).jpg
+productos/ja-001.jpg | File:Melnor Garden Hose Water Nozzle 5 LR.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Melnor_Garden_Hose_Water_Nozzle_5_LR.jpg
+productos/ja-002.jpg | File:Pruning Shears.jpg | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Pruning_Shears.jpg
+categorias/manuales.jpg | File:Various hand tools and hardware items scattered on an old green workbench in a workshop.jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Various_hand_tools_and_hardware_items_scattered_on_an_old_green_workbench_in_a_workshop.jpg
+categorias/electricas.jpg | File:The tools (cropped to power tools).JPG | Public domain | https://commons.wikimedia.org/wiki/File:The_tools_(cropped_to_power_tools).JPG
+categorias/pinturas.jpg | File:Ines August 2014-2a.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Ines_August_2014-2a.jpg
+categorias/gasfiteria.jpg | File:Haltern am See, Sythen, Werkzeughalle der Quarzwerke -- 2015 -- 4989.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Haltern_am_See,_Sythen,_Werkzeughalle_der_Quarzwerke_--_2015_--_4989.jpg
+categorias/electricidad.jpg | File:Electrical-wiring-rough-in.jpg | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Electrical-wiring-rough-in.jpg
+categorias/fijaciones.jpg | File:Bolts,Nuts & Washers.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Bolts,Nuts_%26_Washers.jpg
+categorias/construccion.jpg | File:Clay block bricks on a construction site in Germany.jpg | CC BY 3.0 de | https://commons.wikimedia.org/wiki/File:Clay_block_bricks_on_a_construction_site_in_Germany.jpg
+categorias/jardin.jpg | File:Gardening tools.jpg | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Gardening_tools.jpg
+portada/hero.jpg | File:Cluttered workbench in a rustic workshop filled with tools and materials.jpg | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Cluttered_workbench_in_a_rustic_workshop_filled_with_tools_and_materials.jpg

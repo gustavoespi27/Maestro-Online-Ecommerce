@@ -1,0 +1,53 @@
+@using System.Text.Json
+@inject IWebHostEnvironment Env
+@{
+    ViewData["Title"] = "Créditos de imágenes";
+    ViewData["Descripcion"] = "Atribución de las fotografías usadas en El Maestro Online, publicadas en Wikimedia Commons bajo licencias libres.";
+    var ruta = System.IO.Path.Combine(Env.WebRootPath, "img", "creditos-imagenes.json");
+    var creditos = System.IO.File.Exists(ruta)
+        ? JsonSerializer.Deserialize<List<Dictionary<string, string?>>>(System.IO.File.ReadAllText(ruta)) ?? new()
+        : new();
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">©️ Propiedad intelectual</span>
+        <h1 class="h2 fw-bold mb-1">Créditos de imágenes</h1>
+        <p class="mb-0">
+            Respetamos el trabajo de los autores (Ley 17.336). Las fotografías del sitio provienen de Wikimedia Commons y se usan según su licencia libre,
+            que exige reconocer al autor y la licencia. Las imágenes se redimensionaron para la web.
+        </p>
+    </header>
+
+    <div class="texto-legal p-0 overflow-hidden" data-anim="subir">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light"><tr><th></th><th>Imagen</th><th>Autor</th><th>Licencia</th></tr></thead>
+                <tbody>
+                    @foreach (var c in creditos)
+                    {
+                        <tr>
+                            <td style="width:64px"><img src="@c["archivo"]" alt="" class="miniatura-admin" loading="lazy" /></td>
+                            <td><a href="@c["fuente"]" target="_blank" rel="noopener">@c["titulo"]</a></td>
+                            <td>@c["autor"]</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(c.GetValueOrDefault("urlLicencia")))
+                                {
+                                    <a href="@c["urlLicencia"]" target="_blank" rel="noopener license">@c["licencia"]</a>
+                                }
+                                else
+                                {
+                                    @c["licencia"]
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="small text-muted mt-3">
+        El logo de El Maestro Online es una creación original del proyecto. Las marcas comerciales mencionadas pertenecen a sus respectivos titulares
+        y se usan solo con fines descriptivos (Ley 19.039).
+    </p>
+</div>

@@ -1,0 +1,80 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<OpcionesTienda> Opciones
+@{
+    ViewData["Title"] = "Envíos y despacho a todo Chile";
+    ViewData["Descripcion"] = "Tarifas y plazos de despacho de El Maestro Online por región de Chile. Despacho gratis sobre $50.000 y retiro en tienda sin costo.";
+    var t = Opciones.Value;
+    var ejemplo = Envios.RangoEntrega(Envios.RegionPorDefecto, DateTime.Now);
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">🚚 Logística</span>
+        <h1 class="h2 fw-bold mb-1">Envíos y despacho a todo Chile</h1>
+        <p class="mb-0">Preparamos tu pedido el mismo día hábil si compras antes de las 14:00 y te avisamos con un código de seguimiento cuando sale de bodega.</p>
+    </header>
+
+    <div class="row g-3 mb-4">
+        @foreach (var (icono, titulo, texto, i) in new[]
+        {
+            ("🧾", "1. Compras y pagas", "Confirmas tu pedido con Webpay y reservamos el stock al instante.", 0),
+            ("📦", "2. Preparamos", "Nuestro equipo arma tu pedido en bodega (en preparación).", 1),
+            ("🚚", "3. Despachamos", "Lo entregamos al transportista y te damos el código de seguimiento.", 2),
+            ("🏠", "4. Recibes", "Llega a tu domicilio u obra en el plazo de tu región.", 3)
+        })
+        {
+            <div class="col-6 col-lg-3" data-anim="subir" style="--retraso:@(i * 0.08)s">
+                <div class="beneficio flex-column align-items-start h-100">
+                    <span class="icono fs-4">@icono</span>
+                    <div><strong>@titulo</strong><span>@texto</span></div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8" data-anim="subir">
+            <div class="texto-legal p-0 overflow-hidden">
+                <div class="p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h2 class="h5 fw-bold mb-0">Tarifas y plazos por región</h2>
+                    <span class="badge rounded-pill text-bg-success">Gratis sobre @t.DespachoGratisDesde.Clp()*</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover tabla-tarifas mb-0">
+                        <thead class="table-light"><tr><th>Región</th><th class="text-end">Costo</th><th class="text-center">Plazo (días hábiles)</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in Envios.Regiones)
+                            {
+                                <tr class="@(r.Nombre == Envios.RegionPorDefecto ? "table-warning" : "")">
+                                    <td>@r.Nombre</td>
+                                    <td class="text-end fw-semibold">@r.Costo.Clp()</td>
+                                    <td class="text-center">@r.DiasMin a @r.DiasMax</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted p-3 mb-0">
+                    * En compras sobre @t.DespachoGratisDesde.Clp() el despacho es gratis, excepto en Arica y Parinacota, Tarapacá, Aysén y Magallanes, donde tiene 50% de descuento.
+                    Los plazos se cuentan desde la confirmación del pago, de lunes a sábado. Las compras después de las 14:00 se procesan al día hábil siguiente.
+                </p>
+            </div>
+        </div>
+        <div class="col-lg-4" data-anim="derecha">
+            <div class="caja-compra mb-3">
+                <h2 class="h6 fw-bold">🏪 Retiro en tienda gratis</h2>
+                <p class="small text-muted mb-2">@t.Direccion · Lunes a sábado, 9:00 a 19:00.</p>
+                <p class="small mb-0">Disponible desde el día hábil siguiente a tu compra. Presenta tu número de pedido y tu carnet.</p>
+            </div>
+            <div class="caja-compra mb-3">
+                <h2 class="h6 fw-bold">📅 Si compras hoy en Santiago</h2>
+                <p class="small mb-0">Lo recibes entre el <strong>@ejemplo.Desde.ToString("dddd d 'de' MMMM")</strong> y el <strong>@ejemplo.Hasta.ToString("dddd d 'de' MMMM")</strong>.</p>
+            </div>
+            <div class="caja-compra">
+                <h2 class="h6 fw-bold">📍 ¿Dónde está mi pedido?</h2>
+                <p class="small text-muted">Sigue tu envío con el código de seguimiento o el número de orden.</p>
+                <a class="btn btn-naranja w-100" asp-action="Seguimiento">Seguir mi envío</a>
+            </div>
+        </div>
+    </div>
+</div>

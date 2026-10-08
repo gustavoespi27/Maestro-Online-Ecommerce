@@ -1,0 +1,34 @@
+@model List<Categoria>
+@{
+    ViewData["Title"] = "Categorías";
+    var conteos = (Dictionary<int, int>)ViewBag.Conteos;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Categorías</h1>
+    <a class="btn btn-naranja" asp-action="Crear">+ Nueva categoría</a>
+</div>
+
+<div class="card">
+    <table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th>Nombre</th><th>Descripción</th><th class="text-center">Productos</th><th class="text-end">Acciones</th></tr></thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@c.Nombre</td>
+                    <td class="small text-muted">@c.Descripcion</td>
+                    <td class="text-center">
+                        <a asp-controller="Productos" asp-action="Index" asp-route-categoriaId="@c.Id">@conteos[c.Id]</a>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Editar" asp-route-id="@c.Id">Editar</a>
+                        <form asp-action="Eliminar" asp-route-id="@c.Id" method="post" class="d-inline" data-confirmar="¿Eliminar esta categoría?">
+                            <button class="btn btn-sm btn-outline-danger" disabled="@(conteos[c.Id] > 0)" title="@(conteos[c.Id] > 0 ? "Tiene productos asociados" : "")">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,99 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<OpcionesTienda> Opciones
+@model MensajeContacto
+@{
+    ViewData["Title"] = "Contacto";
+    ViewData["Descripcion"] = "Contáctanos: consultas de productos, estado de pedidos, cambios y devoluciones o cotizaciones para obras. Respondemos en menos de 24 horas hábiles.";
+    var t = Opciones.Value;
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">💬 Atención al cliente</span>
+        <h1 class="h2 fw-bold mb-1">¿En qué te podemos ayudar, maestro?</h1>
+        <p class="mb-0">Escríbenos y te respondemos en menos de 24 horas hábiles. Si es urgente, háblanos por WhatsApp o pregúntale a Maestro Bot.</p>
+    </header>
+
+    <div class="row g-4">
+        <div class="col-lg-4 order-lg-2">
+            <div class="d-grid gap-3" data-anim="derecha">
+                <a class="tarjeta-contacto" href="https://wa.me/@t.WhatsApp" target="_blank" rel="noopener">
+                    <span class="icono" style="background:#25d366"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-1.7-.1-3-1-4.9-3.9-5.1-4.1-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.4.2.5.3.1.2.1.6-.1 1.2Z" /></svg></span>
+                    <span><strong>WhatsApp</strong><small>@t.TelefonoVisible · respuesta en minutos</small></span>
+                </a>
+                <a class="tarjeta-contacto" href="mailto:@t.Email">
+                    <span class="icono" style="background:var(--carbon-3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg></span>
+                    <span><strong>Correo</strong><small>@t.Email</small></span>
+                </a>
+                <button type="button" class="tarjeta-contacto border-0 text-start" data-abrir-chat>
+                    <span class="icono" style="background:var(--naranja)">🤖</span>
+                    <span><strong>Maestro Bot</strong><small>Respuestas al instante, 24/7</small></span>
+                </button>
+                <div class="tarjeta-contacto">
+                    <span class="icono" style="background:var(--amarillo);color:var(--carbon)">📍</span>
+                    <span><strong>Tienda</strong><small>@t.Direccion<br />Lun a Sáb, 9:00 a 19:00</small></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 order-lg-1">
+            <div class="texto-legal" data-anim="subir">
+                <h2 class="h5 fw-bold mb-3">Envíanos un mensaje</h2>
+                <form asp-action="Index" method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                    <div class="campo-trampa" aria-hidden="true">
+                        <label for="sitioWeb">No llenar</label>
+                        <input id="sitioWeb" name="sitioWeb" tabindex="-1" autocomplete="off" />
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Nombre" class="form-label"></label>
+                            <input asp-for="Nombre" class="form-control" autocomplete="name" />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Asunto" class="form-label"></label>
+                            <select asp-for="Asunto" class="form-select">
+                                @foreach (var a in Enum.GetValues<AsuntoContacto>())
+                                {
+                                    <option value="@a" selected="@(Model.Asunto == a)">@a.Nombre()</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="OrdenCompra" class="form-label"></label>
+                            <input asp-for="OrdenCompra" class="form-control" placeholder="F2610…" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Telefono" class="form-label"></label>
+                            <input asp-for="Telefono" class="form-control" autocomplete="tel" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Mensaje" class="form-label"></label>
+                            <textarea asp-for="Mensaje" class="form-control" rows="5" maxlength="2000" placeholder="Cuéntanos con detalle en qué te ayudamos"></textarea>
+                            <span asp-validation-for="Mensaje" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="aceptaPrivacidad" value="true" id="aceptaPrivacidad" />
+                                <label class="form-check-label small" for="aceptaPrivacidad">
+                                    Acepto que El Maestro Online use estos datos solo para responder mi mensaje, según la
+                                    <a asp-controller="Info" asp-action="Privacidad" target="_blank">Política de Privacidad</a>.
+                                </label>
+                            </div>
+                            <span class="text-danger small">@ViewData.ModelState["aceptaPrivacidad"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-naranja btn-lg mt-4 px-5">Enviar mensaje</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

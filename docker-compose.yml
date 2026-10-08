@@ -1,0 +1,39 @@
+# Inicia El Maestro Online + SQL Server con un solo comando:
+#   1) cp .env.example .env   (y cambia las contraseñas)
+#   2) docker compose up --build
+#   3) abre http://localhost:8080
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQL_PASSWORD:?Define SQL_PASSWORD en el archivo .env}
+    volumes:
+      - datos-sql:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  web:
+    build: .
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Development habilita el pago simulado (demo sin llaves de Transbank)
+      ASPNETCORE_ENVIRONMENT: ${ENTORNO:-Development}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=FerreteriaDb;User Id=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Admin__Email: ${ADMIN_EMAIL:-admin@ferreteria.cl}
+      Admin__Password: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en el archivo .env}
+      Pagos__Modo: ${PAGOS_MODO:-Simulado}
+      Pagos__CodigoComercio: ${WEBPAY_CODIGO_COMERCIO:-}
+      Pagos__ApiKeySecret: ${WEBPAY_API_KEY_SECRET:-}
+    restart: unless-stopped
+
+volumes:
+  datos-sql:

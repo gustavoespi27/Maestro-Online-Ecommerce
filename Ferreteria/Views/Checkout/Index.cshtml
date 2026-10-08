@@ -1,0 +1,176 @@
+@model CheckoutVM
+@{
+    ViewData["Title"] = "Finalizar compra";
+    var gratisDesde = Model.Carrito.DespachoGratisDesde;
+    var subtotal = Model.Carrito.Subtotal;
+    var ahora = DateTime.Now;
+    var retiro = Envios.SumarDiasHabiles(ahora, Envios.DiasPreparacionRetiro);
+}
+
+<div class="container my-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h1 class="h3 fw-bold mb-0">Finalizar compra</h1>
+        <span class="small text-muted">🔒 Pago seguro con Webpay · Tus datos se usan solo para tu pedido</span>
+    </div>
+    <form asp-action="Index" method="post" id="formCheckout">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                @if (Model.EsInvitado)
+                {
+                    <div class="card mb-3 border-0" style="background:var(--naranja-suave)">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <h2 class="h5 mb-0">Comprando como invitado 👤</h2>
+                                <a class="small fw-semibold" asp-controller="Cuenta" asp-action="Login" asp-route-returnUrl="/Checkout">¿Tienes cuenta? Ingresa</a>
+                            </div>
+                            <p class="small text-muted mb-2">No necesitas registrarte. Te enviaremos el comprobante y el seguimiento a tu correo.</p>
+                            <label asp-for="EmailInvitado" class="form-label"></label>
+                            <input asp-for="EmailInvitado" class="form-control" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.cl" required />
+                            <span asp-validation-for="EmailInvitado" class="text-danger small"></span>
+                        </div>
+                    </div>
+                }
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">1. ¿Cómo quieres recibir tu pedido?</h2>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" asp-for="TipoEntrega" value="@TipoEntrega.Despacho" id="entregaDespacho" />
+                            <label class="form-check-label" for="entregaDespacho">
+                                <strong>Despacho a domicilio</strong> <span class="text-muted small">(costo y plazo según región)</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="TipoEntrega" value="@TipoEntrega.RetiroEnTienda" id="entregaRetiro" />
+                            <label class="form-check-label" for="entregaRetiro">
+                                <strong>Retiro en tienda</strong> <span class="text-muted small">(gratis · disponible desde el @retiro.ToString("dddd d 'de' MMMM"))</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">2. Datos de contacto y entrega</h2>
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label asp-for="NombreReceptor" class="form-label"></label>
+                                <input asp-for="NombreReceptor" class="form-control" autocomplete="name" />
+                                <span asp-validation-for="NombreReceptor" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-5">
+                                <label asp-for="Telefono" class="form-label"></label>
+                                <input asp-for="Telefono" class="form-control" placeholder="+56 9 1234 5678" autocomplete="tel" />
+                                <span asp-validation-for="Telefono" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 campo-despacho">
+                                <label asp-for="Region" class="form-label"></label>
+                                <select asp-for="Region" class="form-select" id="selectRegion">
+                                    @foreach (var r in Envios.Regiones)
+                                    {
+                                        var costo = Envios.Costo(r.Nombre, subtotal, gratisDesde);
+                                        var rango = Envios.RangoEntrega(r.Nombre, ahora);
+                                        <option value="@r.Nombre" data-costo="@costo"
+                                                data-plazo="@($"{rango.Desde:dddd d 'de' MMMM} y el {rango.Hasta:dddd d 'de' MMMM}")"
+                                                selected="@(Model.Region == r.Nombre)">@r.Nombre</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Region" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 campo-despacho">
+                                <label asp-for="Comuna" class="form-label"></label>
+                                <input asp-for="Comuna" class="form-control" autocomplete="address-level2" />
+                                <span asp-validation-for="Comuna" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12 campo-despacho">
+                                <label asp-for="Direccion" class="form-label"></label>
+                                <input asp-for="Direccion" class="form-control" placeholder="Calle, número, depto." autocomplete="street-address" />
+                                <span asp-validation-for="Direccion" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Notas" class="form-label"></label>
+                                <textarea asp-for="Notas" class="form-control" rows="2" placeholder="Ej: dejar con conserjería, horario de la obra…"></textarea>
+                            </div>
+                        </div>
+                        <div class="dato-envio mt-3 campo-despacho" id="cajaPlazo">
+                            <span>Entrega estimada</span>
+                            <div>📅 Lo recibes entre el <strong id="textoPlazo"></strong>.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card resumen">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">3. Resumen del pedido</h2>
+                        <ul class="list-unstyled small mb-3">
+                            @foreach (var l in Model.Carrito.Lineas)
+                            {
+                                <li class="d-flex justify-content-between py-1 border-bottom">
+                                    <span>@l.Cantidad × @l.Producto.Nombre</span>
+                                    <span class="text-nowrap ms-2">@l.Subtotal.Clp()</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="d-flex justify-content-between"><span>Subtotal (IVA incluido)</span><span>@subtotal.Clp()</span></div>
+                        <div class="d-flex justify-content-between">
+                            <span>Despacho</span>
+                            <span id="costoDespacho"></span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fs-5 fw-bold">
+                            <span>Total</span>
+                            <span id="totalPedido" data-subtotal="@subtotal"></span>
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" name="AceptaTerminos" id="AceptaTerminos" value="true" checked="@Model.AceptaTerminos" required />
+                            <label class="form-check-label small" for="AceptaTerminos">
+                                Acepto los <a asp-controller="Info" asp-action="Terminos" target="_blank">Términos y Condiciones</a> y la
+                                <a asp-controller="Info" asp-action="Privacidad" target="_blank">Política de Privacidad</a>.
+                                Sé que tengo <a asp-controller="Info" asp-action="Devoluciones" target="_blank">10 días de retracto y 6 meses de garantía</a>.
+                            </label>
+                        </div>
+                        <span asp-validation-for="AceptaTerminos" class="text-danger small d-block"></span>
+
+                        <button type="submit" class="btn btn-naranja w-100 btn-lg mt-3">🔒 Pagar con Webpay</button>
+                        <div class="small text-muted mt-2 text-center">Serás redirigido al sitio seguro de Transbank. No guardamos los datos de tu tarjeta.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script nonce="@Nonce.Valor">
+        // Muestra/oculta la dirección y recalcula despacho, total y plazo según tipo de entrega y región
+        (function () {
+            const radios = document.querySelectorAll('input[name="TipoEntrega"]');
+            const camposDespacho = document.querySelectorAll('.campo-despacho');
+            const region = document.getElementById('selectRegion');
+            const spanCosto = document.getElementById('costoDespacho');
+            const spanTotal = document.getElementById('totalPedido');
+            const textoPlazo = document.getElementById('textoPlazo');
+            const subtotal = parseInt(spanTotal.dataset.subtotal, 10);
+            const clp = n => '$' + n.toLocaleString('es-CL');
+
+            function actualizar() {
+                const esDespacho = document.getElementById('entregaDespacho').checked;
+                camposDespacho.forEach(c => c.style.display = esDespacho ? '' : 'none');
+                const opcion = region.options[region.selectedIndex];
+                const envio = esDespacho ? parseInt(opcion.dataset.costo, 10) : 0;
+                spanCosto.textContent = envio === 0 ? 'Gratis' : clp(envio);
+                spanTotal.textContent = clp(subtotal + envio);
+                textoPlazo.textContent = opcion.dataset.plazo;
+            }
+            radios.forEach(r => r.addEventListener('change', actualizar));
+            region.addEventListener('change', actualizar);
+            actualizar();
+        })();
+    </script>
+}

@@ -1,0 +1,23 @@
+@model Pedido
+@{
+    ViewData["Title"] = "Redirigiendo al pago";
+    var url = (string)ViewBag.UrlPago;
+    var esSimulado = (string)ViewBag.Pasarela == "Simulado";
+}
+
+<div class="container my-5 text-center" style="max-width:520px">
+    <div class="spinner-border text-warning mb-3" role="status"></div>
+    <h1 class="h4">Te estamos llevando a @(esSimulado ? "la pasarela de pago de prueba" : "Webpay")...</h1>
+    <p class="text-muted">Pedido <strong>@Model.OrdenCompra</strong> por <strong>@Model.Total.Clp()</strong></p>
+
+    @* Webpay exige que el token se envíe por POST en un campo llamado token_ws *@
+    <form id="formWebpay" action="@url" method="@(esSimulado ? "get" : "post")">
+        <input type="hidden" name="token_ws" value="@ViewBag.Token" />
+        <noscript><p>Tu navegador no ejecuta JavaScript: presiona el botón para continuar.</p></noscript>
+        <button type="submit" class="btn btn-naranja">Continuar al pago</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script nonce="@Nonce.Valor">document.getElementById('formWebpay').submit();</script>
+}

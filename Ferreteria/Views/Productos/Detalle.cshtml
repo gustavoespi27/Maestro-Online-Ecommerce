@@ -1,0 +1,293 @@
+@using System.Text.Json
+@model Producto
+@{
+    ViewData["Title"] = $"{Model.Nombre}{(string.IsNullOrEmpty(Model.Marca) ? "" : " " + Model.Marca)}";
+    var resumen = Model.Descripcion ?? "";
+    ViewData["Descripcion"] = $"{Model.Nombre} {Model.Marca} a {Model.Precio.Clp()}{(Model.EnOferta ? $" ({Model.PorcentajeDescuento}% de descuento)" : "")}. {resumen} Compra online en El Maestro Online con despacho a todo Chile.";
+    ViewData["ImagenSocial"] = Model.ImagenUrl;
+    ViewData["TipoOg"] = "product";
+    var recomendaciones = ViewBag.Recomendaciones as List<Recomendacion> ?? new();
+    var resenas = ViewBag.Resenas as List<Resena> ?? new();
+    var miResena = ViewBag.MiResena as Resena;
+    bool puedeOpinar = ViewBag.PuedeOpinar ?? false;
+    var promedio = resenas.Any() ? resenas.Average(r => r.Calificacion) : 0;
+    // A Google solo se informan las reseñas de compras verificadas (nunca las de ejemplo)
+    var verificadas = resenas.Where(r => !r.EsEjemplo).ToList();
+    var estrellasLlenas = (int)Math.Round(promedio);
+
+    var urlBase = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var urlProducto = urlBase + Context.Request.Path;
+    var datosProducto = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@graph"] = new object[]
+        {
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "Product",
+                ["name"] = Model.Nombre,
+                ["sku"] = Model.Sku,
+                ["description"] = Model.Descripcion,
+                ["image"] = urlBase + (Model.ImagenUrl ?? "/img/productos/sin-imagen.svg"),
+                ["category"] = Model.Categoria?.Nombre,
+                ["brand"] = string.IsNullOrEmpty(Model.Marca) ? null : new Dictionary<string, object?> { ["@type"] = "Brand", ["name"] = Model.Marca },
+                // Solo con reseñas reales de compras verificadas (nunca valores inventados)
+                ["aggregateRating"] = verificadas.Any()
+                    ? new Dictionary<string, object?> { ["@type"] = "AggregateRating", ["ratingValue"] = Math.Round(verificadas.Average(r => r.Calificacion), 1), ["reviewCount"] = verificadas.Count }
+                    : null,
+                ["offers"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Offer",
+                    ["url"] = urlProducto,
+                    ["priceCurrency"] = "CLP",
+                    ["price"] = Model.Precio,
+                    ["availability"] = Model.Stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                    ["itemCondition"] = "https://schema.org/NewCondition",
+                    ["seller"] = new Dictionary<string, object?> { ["@id"] = urlBase + "/#tienda" }
+                }
+            },
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "BreadcrumbList",
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 1, ["name"] = "Inicio", ["item"] = urlBase + "/" },
+                    new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 2, ["name"] = Model.Categoria?.Nombre ?? "Catálogo", ["item"] = $"{urlBase}/Productos?categoriaId={Model.CategoriaId}" },
+                    new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 3, ["name"] = Model.Nombre, ["item"] = urlProducto }
+                }
+            }
+        }
+    };
+    // Los diccionarios no omiten valores nulos al serializar: se quitan las claves vacías (ej: sin reseñas verificadas)
+    foreach (var nodo in ((object[])datosProducto["@graph"]!).OfType<Dictionary<string, object?>>())
+        foreach (var clave in nodo.Where(kv => kv.Value is null).Select(kv => kv.Key).ToList())
+            nodo.Remove(clave);
+    var opcionesJson = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+    // Barra de "stock restante" (visual): se llena según qué tan bajo está el stock
+    var porcentajeStock = Math.Clamp(Model.Stock * 100 / Math.Max(1, Model.StockMinimo * 4), 6, 100);
+}
+
+@section Seo {
+    <script type="application/ld+json">@Html.Raw(JsonSerializer.Serialize(datosProducto, opcionesJson))</script>
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb" data-anim="subir">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-categoriaId="@Model.CategoriaId">@Model.Categoria?.Nombre</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Nombre</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4 g-lg-5" data-producto>
+        <div class="col-md-6" data-anim="izquierda">
+            <div class="imagen-detalle" data-zoom title="Haz clic para hacer zoom">
+                <img src="@(Model.ImagenUrl ?? "/img/productos/sin-imagen.svg")" alt="@Model.Nombre @Model.Marca" width="800" height="800" />
+                <span class="etiquetas">
+                    @if (Model.EnOferta)
+                    {
+                        <span class="etiqueta etiqueta-descuento fs-6">-@Model.PorcentajeDescuento%</span>
+                    }
+                    @if (Model.Destacado)
+                    {
+                        <span class="etiqueta etiqueta-hot">★ Top ventas</span>
+                    }
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6" data-anim="derecha">
+            <div class="caja-compra">
+                @if (!string.IsNullOrEmpty(Model.Marca))
+                {
+                    <div class="marca">@Model.Marca</div>
+                }
+                <h1 class="h2 fw-bold mb-1">@Model.Nombre</h1>
+                <div class="text-muted small mb-3">
+                    SKU: @Model.Sku · @Model.Categoria?.Nombre
+                    @if (resenas.Any())
+                    {
+                        <a href="#resenas" class="ms-2 text-decoration-none"><span class="estrellas">@(new string('★', estrellasLlenas))<span class="vacia">@(new string('★', 5 - estrellasLlenas))</span></span> @promedio.ToString("0.0") (@resenas.Count)</a>
+                    }
+                </div>
+
+                @if (Model.EnOferta)
+                {
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="chip-hot py-1"><span class="punto"></span> Hot Sale</span>
+                        <span class="precio-antes fs-6">Normal: @Model.PrecioAnterior!.Value.Clp()</span>
+                    </div>
+                }
+                <div class="precio precio-grande @(Model.EnOferta ? "en-oferta" : "")">@Model.Precio.Clp()</div>
+                <div class="small text-muted mb-3">
+                    IVA incluido
+                    @if (Model.EnOferta)
+                    {
+                        <span class="text-success fw-semibold ms-2">Ahorras @((Model.PrecioAnterior!.Value - Model.Precio).Clp())</span>
+                    }
+                </div>
+
+                @if (Model.Stock == 0)
+                {
+                    <div class="alert alert-secondary py-2">Producto agotado. ¡Escríbenos por WhatsApp y te avisamos cuando llegue!</div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="@(Model.StockBajo ? "text-danger fw-semibold" : "text-success fw-semibold")">
+                                @(Model.StockBajo ? $"🔥 ¡Quedan solo {Model.Stock} unidades!" : "✔ En stock, listo para despacho")
+                            </span>
+                            <span class="text-muted">@Model.Stock disponibles</span>
+                        </div>
+                        @if (Model.StockBajo)
+                        {
+                            <div class="barra-stock"><div style="width:@porcentajeStock%"></div></div>
+                        }
+                    </div>
+                    <form asp-controller="Carrito" asp-action="Agregar" method="post" class="d-flex flex-wrap gap-2 align-items-center mb-4" data-agregar-carrito>
+                        <input type="hidden" name="productoId" value="@Model.Id" />
+                        <div class="selector-cantidad">
+                            <button type="button" data-menos aria-label="Quitar uno">−</button>
+                            <label for="cantidad" class="visually-hidden">Cantidad</label>
+                            <input id="cantidad" type="number" name="cantidad" value="1" min="1" max="@Model.Stock" />
+                            <button type="button" data-mas aria-label="Agregar uno">+</button>
+                        </div>
+                        <button type="submit" class="btn btn-naranja btn-lg flex-grow-1 boton-agregar">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /><path d="M2 3h3l2.7 12.4a1.5 1.5 0 0 0 1.5 1.1h8.9a1.5 1.5 0 0 0 1.4-1.1L21.5 8H6.2" /></svg>
+                            Agregar al carrito
+                        </button>
+                    </form>
+                }
+
+                <div class="garantias border-top pt-3">
+                    <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7" /><circle cx="7" cy="18" r="2" /><circle cx="17" cy="18" r="2" /></svg> Despacho gratis en compras sobre $50.000</div>
+                    <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10 12 4l9 6v10H3z" /></svg> Retiro en tienda sin costo</div>
+                    <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" /><path d="m9 12 2 2 4-4" /></svg> Compra protegida con Webpay</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Descripcion))
+            {
+                <div class="mt-4">
+                    <h2 class="h6 text-uppercase fw-bold">Descripción</h2>
+                    <p class="text-muted">@Model.Descripcion</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ===================== RESEÑAS (compra verificada) ===================== -->
+    <section id="resenas" class="my-5" data-anim="subir">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <span class="antetitulo">Lo que opinan los clientes</span>
+                <h2 class="titulo-seccion">Reseñas de clientes</h2>
+                @if (resenas.Any())
+                {
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="display-5 fw-bold">@promedio.ToString("0.0")</div>
+                        <div>
+                            <div class="estrellas fs-5">@(new string('★', estrellasLlenas))<span class="vacia">@(new string('★', 5 - estrellasLlenas))</span></div>
+                            <div class="small text-muted">@resenas.Count reseña@(resenas.Count == 1 ? "" : "s")@(verificadas.Any() ? $" · {verificadas.Count} de compras verificadas" : "")</div>
+                        </div>
+                    </div>
+                    @for (var e = 5; e >= 1; e--)
+                    {
+                        var cant = resenas.Count(r => r.Calificacion == e);
+                        <div class="d-flex align-items-center gap-2 small mb-1">
+                            <span style="width:1.8rem">@e ★</span>
+                            <div class="barra-calificacion flex-grow-1"><div style="width:@(cant * 100 / resenas.Count)%"></div></div>
+                            <span class="text-muted" style="width:1.6rem">@cant</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted small">Este producto aún no tiene reseñas. Solo publicamos opiniones de personas que lo compraron, para que sean confiables.</p>
+                }
+
+                @if (puedeOpinar)
+                {
+                    <form asp-controller="Resenas" asp-action="Guardar" method="post" class="caja-compra mt-3">
+                        <input type="hidden" name="productoId" value="@Model.Id" />
+                        <div class="fw-semibold mb-1">@(miResena is null ? "Cuéntanos qué te pareció" : "Edita tu reseña")</div>
+                        <div class="selector-estrellas mb-2" role="radiogroup" aria-label="Calificación">
+                            @for (var e = 5; e >= 1; e--)
+                            {
+                                <input type="radio" name="calificacion" id="estrella@(e)" value="@e" checked="@(miResena?.Calificacion == e)" required />
+                                <label for="estrella@(e)" title="@e estrella@(e == 1 ? "" : "s")">★</label>
+                            }
+                        </div>
+                        <textarea name="comentario" class="form-control mb-2" rows="3" maxlength="600" placeholder="¿Cómo te funcionó? (opcional)">@miResena?.Comentario</textarea>
+                        <button class="btn btn-naranja w-100">Publicar reseña</button>
+                    </form>
+                }
+                else if (User.Identity?.IsAuthenticated != true)
+                {
+                    <p class="small text-muted">¿Lo compraste? <a asp-controller="Cuenta" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Ingresa</a> para dejar tu reseña.</p>
+                }
+                else
+                {
+                    <p class="small text-muted">Podrás opinar sobre este producto después de comprarlo.</p>
+                }
+            </div>
+            <div class="col-lg-8">
+                @if (resenas.Any())
+                {
+                    <div class="texto-legal py-2">
+                        @foreach (var r in resenas)
+                        {
+                            // Solo nombre e inicial del apellido (minimización de datos personales)
+                            var partes = (r.Usuario?.NombreCompleto ?? r.NombreAutor ?? "Cliente").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var visible = partes.Length > 1 ? $"{partes[0]} {partes[1][0]}." : partes.FirstOrDefault() ?? "Cliente";
+                            <article class="resena">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <div>
+                                        <span class="estrellas">@(new string('★', r.Calificacion))<span class="vacia">@(new string('★', 5 - r.Calificacion))</span></span>
+                                        <strong class="ms-1">@visible</strong>
+                                        @if (r.EsEjemplo)
+                                        {
+                                            <span class="resena-ejemplo ms-1" title="Reseña de demostración del proyecto académico">Reseña de ejemplo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="compra-verificada ms-1">✔ Compra verificada</span>
+                                        }
+                                    </div>
+                                    <span class="small text-muted">@r.Fecha.ToString("dd-MM-yyyy")</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(r.Comentario))
+                                {
+                                    <p class="mb-0 mt-1">@r.Comentario</p>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== RECOMENDACIONES PERSONALIZADAS ===================== -->
+    @if (recomendaciones.Any())
+    {
+        <section class="my-5">
+            <div class="cabecera-seccion" data-anim="subir">
+                <div>
+                    <span class="antetitulo">Recomendado para ti</span>
+                    <h2 class="titulo-seccion mb-0">Complementa tu compra</h2>
+                </div>
+            </div>
+            <div class="row g-3">
+                @{ var i = 0; }
+                @foreach (var r in recomendaciones)
+                {
+                    <div class="col-6 col-md-3" data-anim="subir" style="--retraso:@((i++) * 0.08)s">
+                        <partial name="_TarjetaRecomendacion" model="r" />
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</div>

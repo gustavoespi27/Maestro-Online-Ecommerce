@@ -1,0 +1,57 @@
+@model Pedido
+@* Línea de tiempo logística de un pedido (se usa en "Seguimiento" y en el detalle de "Mis pedidos") *@
+@{
+    var esDespacho = Model.TipoEntrega == TipoEntrega.Despacho;
+    var anulado = Model.Estado is EstadoPedido.Anulado or EstadoPedido.Rechazado;
+    var orden = new[] { EstadoPedido.PendientePago, EstadoPedido.Pagado, EstadoPedido.EnPreparacion, EstadoPedido.Despachado, EstadoPedido.Entregado };
+    var actual = Array.IndexOf(orden, Model.Estado);
+    var pasos = new List<(EstadoPedido Estado, string Titulo, string Detalle)>
+    {
+        (EstadoPedido.Pagado, "Pago confirmado", Model.FechaPago?.ToString("dd-MM-yyyy HH:mm") ?? "Esperando la confirmación de Webpay"),
+        (EstadoPedido.EnPreparacion, "En preparación", "Estamos armando tu pedido en bodega"),
+    };
+    if (esDespacho)
+        pasos.Add((EstadoPedido.Despachado, "Despachado",
+            Model.FechaDespacho is { } fd ? $"{fd:dd-MM-yyyy HH:mm} · {Model.Transportista} · Código {Model.CodigoSeguimiento}" : "Te daremos el código de seguimiento al despachar"));
+    pasos.Add((EstadoPedido.Entregado, esDespacho ? "Entregado" : "Retirado en tienda",
+        Model.FechaEntrega?.ToString("dd-MM-yyyy HH:mm") ?? (Model.FechaEstimadaEntrega is { } fe ? $"Fecha estimada: {fe:dddd d 'de' MMMM}" : "")));
+}
+
+<div class="card border-0 shadow-sm" data-anim="subir">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <div class="small text-muted">Pedido</div>
+                <div class="h5 fw-bold mb-0">@Model.OrdenCompra</div>
+            </div>
+            <partial name="_EstadoPedido" model="Model.Estado" />
+        </div>
+
+        <div class="row g-2 mb-4">
+            <div class="col-6 col-md-3"><div class="dato-envio h-100"><span>Entrega</span>@Model.TipoEntrega.Nombre()</div></div>
+            <div class="col-6 col-md-3"><div class="dato-envio h-100"><span>Destino</span>@(esDespacho ? $"{Model.Comuna}, {Model.Region}" : "Tienda")</div></div>
+            <div class="col-6 col-md-3"><div class="dato-envio h-100"><span>Llega aprox.</span>@(Model.FechaEstimadaEntrega?.ToString("dd-MM-yyyy") ?? "—")</div></div>
+            <div class="col-6 col-md-3"><div class="dato-envio h-100"><span>Seguimiento</span>@(Model.CodigoSeguimiento ?? "Pendiente")</div></div>
+        </div>
+
+        @if (anulado)
+        {
+            <div class="alert alert-secondary mb-0">Este pedido fue @Model.Estado.Nombre().ToLower(). Si se realizó algún cargo, se reversa automáticamente.</div>
+        }
+        else
+        {
+            <ol class="linea-tiempo">
+                @foreach (var p in pasos)
+                {
+                    var indice = Array.IndexOf(orden, p.Estado);
+                    var hecho = actual >= indice;
+                    <li class="@(hecho ? "hecho" : "") @(actual == indice ? "actual" : "")">
+                        <span class="punto"></span>
+                        <strong>@p.Titulo</strong>
+                        <small>@p.Detalle</small>
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+</div>

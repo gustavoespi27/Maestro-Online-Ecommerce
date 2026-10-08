@@ -1,0 +1,100 @@
+@model ProductoFormVM
+@{
+    var esNuevo = Model.Producto.Id == 0;
+    ViewData["Title"] = esNuevo ? "Nuevo producto" : "Editar producto";
+}
+
+<a asp-action="Index" class="small">← Productos</a>
+<h1 class="h3 mt-2 mb-4">@ViewData["Title"]</h1>
+
+<form asp-action="@(esNuevo ? "Crear" : "Editar")" asp-route-id="@(esNuevo ? null : Model.Producto.Id)" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card"><div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Producto.Sku" class="form-label"></label>
+                        <input asp-for="Producto.Sku" class="form-control" />
+                        <span asp-validation-for="Producto.Sku" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="Producto.Nombre" class="form-label"></label>
+                        <input asp-for="Producto.Nombre" class="form-control" />
+                        <span asp-validation-for="Producto.Nombre" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Producto.Marca" class="form-label"></label>
+                        <input asp-for="Producto.Marca" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Producto.CategoriaId" class="form-label"></label>
+                        <select asp-for="Producto.CategoriaId" asp-items="Model.Categorias" class="form-select">
+                            <option value="0">-- Selecciona --</option>
+                        </select>
+                        <span asp-validation-for="Producto.CategoriaId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Producto.Descripcion" class="form-label"></label>
+                        <textarea asp-for="Producto.Descripcion" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Producto.Precio" class="form-label"></label>
+                        <input asp-for="Producto.Precio" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="Producto.Precio" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="Producto.PrecioAnterior" class="form-label"></label>
+                        <input asp-for="Producto.PrecioAnterior" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="Producto.PrecioAnterior" class="text-danger small"></span>
+                        <div class="form-text">Si es mayor que el precio, el producto aparece "en oferta" con su % de descuento y entra al slide Hot Sale.</div>
+                    </div>
+                    <div class="col-md-4 d-none d-md-block"></div>
+                    <div class="col-md-4">
+                        <label asp-for="Producto.Stock" class="form-label"></label>
+                        <input asp-for="Producto.Stock" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="Producto.Stock" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Producto.StockMinimo" class="form-label"></label>
+                        <input asp-for="Producto.StockMinimo" class="form-control" type="number" min="0" />
+                        <div class="form-text">Bajo este número se avisa en el panel.</div>
+                    </div>
+                    <div class="col-12 d-flex gap-4">
+                        <div class="form-check">
+                            <input asp-for="Producto.Activo" class="form-check-input" />
+                            <label asp-for="Producto.Activo" class="form-check-label"></label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="Producto.Destacado" class="form-check-input" />
+                            <label asp-for="Producto.Destacado" class="form-check-label">Destacado en la portada</label>
+                        </div>
+                    </div>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card"><div class="card-body">
+                <label class="form-label">Imagen</label>
+                <div class="imagen-detalle mb-3" style="min-height:180px">
+                    <img id="vistaPrevia" src="@(Model.Producto.ImagenUrl ?? "/img/productos/sin-imagen.svg")" alt="" />
+                </div>
+                <input type="hidden" asp-for="Producto.ImagenUrl" />
+                <input asp-for="Imagen" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" />
+                <span asp-validation-for="Imagen" class="text-danger small"></span>
+                <div class="form-text">JPG, PNG, WEBP o GIF, máximo 2 MB.</div>
+            </div></div>
+            <button type="submit" class="btn btn-naranja w-100 mt-3">@(esNuevo ? "Crear producto" : "Guardar cambios")</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script nonce="@Nonce.Valor">
+        document.getElementById('Imagen').addEventListener('change', e => {
+            const archivo = e.target.files[0];
+            if (archivo) document.getElementById('vistaPrevia').src = URL.createObjectURL(archivo);
+        });
+    </script>
+}

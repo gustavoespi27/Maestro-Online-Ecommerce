@@ -1,0 +1,47 @@
+@model List<MensajeContacto>
+@{
+    ViewData["Title"] = "Mensajes de contacto";
+    bool soloPendientes = ViewBag.Pendientes;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Mensajes de contacto</h1>
+    <div class="btn-group">
+        <a class="btn btn-sm @(soloPendientes ? "btn-outline-secondary" : "btn-secondary")" asp-action="Index">Todos</a>
+        <a class="btn btn-sm @(soloPendientes ? "btn-secondary" : "btn-outline-secondary")" asp-action="Index" asp-route-pendientes="true">Pendientes</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay mensajes @(soloPendientes ? "pendientes" : "todavía").</div>
+}
+else
+{
+    <div class="d-grid gap-3">
+        @foreach (var m in Model)
+        {
+            <div class="card @(m.Atendido ? "opacity-75" : "border-warning")">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <div>
+                            <span class="badge @(m.Atendido ? "bg-success" : "bg-warning text-dark")">@(m.Atendido ? "Atendido" : "Pendiente")</span>
+                            <span class="badge bg-light text-dark border">@m.Asunto.Nombre()</span>
+                            <strong class="ms-1">#@m.Id.ToString("00000") · @m.Nombre</strong>
+                            <span class="small text-muted">· @m.Fecha.ToString("dd-MM-yyyy HH:mm")</span>
+                        </div>
+                        <form asp-action="CambiarEstado" asp-route-id="@m.Id" method="post">
+                            <button class="btn btn-sm @(m.Atendido ? "btn-outline-secondary" : "btn-naranja")">@(m.Atendido ? "Marcar pendiente" : "Marcar atendido")</button>
+                        </form>
+                    </div>
+                    <p class="mt-2 mb-2" style="white-space:pre-line">@m.Mensaje</p>
+                    <div class="small text-muted">
+                        <a href="mailto:@m.Email?subject=@Uri.EscapeDataString($"Re: {m.Asunto.Nombre()} (solicitud #{m.Id:00000})")">@m.Email</a>
+                        @if (!string.IsNullOrEmpty(m.Telefono)) { <text> · @m.Telefono</text> }
+                        @if (!string.IsNullOrEmpty(m.OrdenCompra)) { <text> · Pedido @m.OrdenCompra</text> }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

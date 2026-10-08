@@ -1,0 +1,13 @@
+@model EstadoPedido
+@{
+    var clase = Model switch
+    {
+        EstadoPedido.PendientePago => "bg-secondary",
+        EstadoPedido.Pagado => "bg-primary",
+        EstadoPedido.EnPreparacion => "bg-info text-dark",
+        EstadoPedido.Despachado => "bg-warning text-dark",
+        EstadoPedido.Entregado => "bg-success",
+        _ => "bg-danger"
+    };
+}
+<span class="badge @clase">@Model.Nombre()</span>

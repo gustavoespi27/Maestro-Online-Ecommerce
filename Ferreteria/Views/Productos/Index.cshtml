@@ -1,0 +1,125 @@
+@model CatalogoVM
+@{
+    var titulo = Model.SoloOfertas ? "Ofertas Hot Sale" : Model.NombreCategoria ?? "Catálogo de productos";
+    ViewData["Title"] = Model.SoloOfertas && Model.NombreCategoria is not null ? $"Ofertas en {Model.NombreCategoria}" : titulo;
+    ViewData["Descripcion"] = Model.SoloOfertas
+        ? "Ofertas Hot Sale en El Maestro Online: herramientas, pinturas y materiales con descuento. Stock limitado, despacho a todo Chile."
+        : Model.NombreCategoria is not null
+            ? $"Compra {Model.NombreCategoria.ToLower()} online en El Maestro Online. {Model.TotalResultados} productos con despacho a todo Chile y pago seguro con Webpay."
+            : "Catálogo completo de El Maestro Online: herramientas manuales y eléctricas, pinturas, gasfitería, electricidad, fijaciones, construcción y jardín.";
+    // La URL canónica conserva solo la categoría (los demás filtros son variantes de la misma página)
+    var urlBase = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    ViewData["Canonical"] = Model.CategoriaId is int cid ? $"{urlBase}/Productos?categoriaId={cid}" : $"{urlBase}/Productos";
+    // Las búsquedas internas no se indexan
+    if (!string.IsNullOrWhiteSpace(Model.Busqueda)) ViewData["NoIndex"] = true;
+}
+
+<div class="container my-4">
+    <header class="cabecera-catalogo mb-4" data-anim="subir">
+        <nav aria-label="breadcrumb" class="position-relative" style="z-index:1">
+            <ol class="breadcrumb small mb-2">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+                <li class="breadcrumb-item @(Model.CategoriaId is null && !Model.SoloOfertas ? "active" : "")">
+                    <a asp-action="Index">Catálogo</a>
+                </li>
+                @if (Model.NombreCategoria is not null)
+                {
+                    <li class="breadcrumb-item active" aria-current="page">@Model.NombreCategoria</li>
+                }
+            </ol>
+        </nav>
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 position-relative" style="z-index:1">
+            <div>
+                <h1 class="h2 fw-bold mb-1">
+                    @if (Model.SoloOfertas)
+                    {
+                        <span class="enlace-ofertas"><span class="llama">🔥</span></span>
+                    }
+                    @titulo
+                </h1>
+                <div class="small" style="color:rgba(255,255,255,.7)">
+                    @Model.TotalResultados producto@(Model.TotalResultados == 1 ? "" : "s")
+                    @if (!string.IsNullOrWhiteSpace(Model.Busqueda))
+                    {
+                        <span>para "<strong class="text-white">@Model.Busqueda</strong>" · <a class="text-warning" asp-action="Index" asp-route-categoriaId="@Model.CategoriaId" asp-route-ofertas="@(Model.SoloOfertas ? "true" : null)">quitar búsqueda</a></span>
+                    }
+                </div>
+            </div>
+            <form method="get" asp-action="Index" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="categoriaId" value="@Model.CategoriaId" />
+                <input type="hidden" name="q" value="@Model.Busqueda" />
+                @if (Model.SoloOfertas)
+                {
+                    <input type="hidden" name="ofertas" value="true" />
+                }
+                <label for="orden" class="small text-nowrap" style="color:rgba(255,255,255,.7)">Ordenar por</label>
+                <select id="orden" name="orden" class="form-select form-select-sm" data-autoenviar>
+                    <option value="relevancia" selected="@(Model.Orden == "relevancia")">Destacados</option>
+                    <option value="descuento" selected="@(Model.Orden == "descuento")">Mayor descuento</option>
+                    <option value="precio-asc" selected="@(Model.Orden == "precio-asc")">Menor precio</option>
+                    <option value="precio-desc" selected="@(Model.Orden == "precio-desc")">Mayor precio</option>
+                    <option value="nombre" selected="@(Model.Orden == "nombre")">Nombre A-Z</option>
+                </select>
+            </form>
+        </div>
+    </header>
+
+    <div class="row g-4">
+        <aside class="col-lg-3" data-anim="izquierda">
+            <div class="filtros">
+                <a class="filtro-ofertas mb-3 @(Model.SoloOfertas ? "activo" : "")" asp-action="Index" asp-route-categoriaId="@Model.CategoriaId" asp-route-q="@Model.Busqueda"
+                   asp-route-ofertas="@(Model.SoloOfertas ? null : "true")">
+                    <span class="llama">🔥</span> @(Model.SoloOfertas ? "Viendo solo ofertas ✕" : "Ver solo ofertas")
+                </a>
+                <h2 class="h6 text-uppercase fw-bold mb-2 small text-muted">Categorías</h2>
+                <div class="list-group list-group-flush">
+                    <a asp-action="Index" asp-route-q="@Model.Busqueda" asp-route-ofertas="@(Model.SoloOfertas ? "true" : null)"
+                       class="list-group-item list-group-item-action @(Model.CategoriaId is null ? "active" : "")">Todas</a>
+                    @foreach (var c in Model.Categorias)
+                    {
+                        <a asp-action="Index" asp-route-categoriaId="@c.Id" asp-route-q="@Model.Busqueda" asp-route-ofertas="@(Model.SoloOfertas ? "true" : null)"
+                           class="list-group-item list-group-item-action @(Model.CategoriaId == c.Id ? "active" : "")">@c.Nombre</a>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <section class="col-lg-9" aria-label="Productos">
+            @if (!Model.Productos.Any())
+            {
+                <div class="text-center py-5 text-muted" data-anim="zoom">
+                    <div style="font-size:3rem">🔧</div>
+                    <p class="mb-3">No encontramos productos con esos filtros.</p>
+                    <a class="btn btn-naranja" asp-action="Index">Ver todo el catálogo</a>
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @{ var i = 0; }
+                    @foreach (var p in Model.Productos)
+                    {
+                        <div class="col-6 col-md-4" data-anim="subir" style="--retraso:@((i++ % 3) * 0.08)s">
+                            <partial name="_TarjetaProducto" model="p" />
+                        </div>
+                    }
+                </div>
+
+                @if (Model.TotalPaginas > 1)
+                {
+                    <nav class="mt-4" aria-label="Paginación">
+                        <ul class="pagination justify-content-center">
+                            @for (var n = 1; n <= Model.TotalPaginas; n++)
+                            {
+                                <li class="page-item @(n == Model.Pagina ? "active" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pagina="@n" asp-route-categoriaId="@Model.CategoriaId"
+                                       asp-route-q="@Model.Busqueda" asp-route-orden="@Model.Orden" asp-route-ofertas="@(Model.SoloOfertas ? "true" : null)">@n</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+        </section>
+    </div>
+</div>
