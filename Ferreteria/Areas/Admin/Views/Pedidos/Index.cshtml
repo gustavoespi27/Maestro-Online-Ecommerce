@@ -1,0 +1,52 @@
+@model List<Pedido>
+@{
+    ViewData["Title"] = "Pedidos";
+    var estadoActual = ViewBag.Estado as EstadoPedido?;
+}
+
+<h1 class="h3 mb-3">Pedidos</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-5"><input name="q" value="@ViewBag.Q" class="form-control" placeholder="Buscar por orden, cliente o correo" /></div>
+    <div class="col-md-4">
+        <select name="estado" class="form-select">
+            <option value="">Todos los estados</option>
+            @foreach (EstadoPedido e in Enum.GetValues(typeof(EstadoPedido)))
+            {
+                <option value="@e" selected="@(estadoActual == e)">@e.Nombre()</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3"><button class="btn btn-outline-secondary w-100">Filtrar</button></div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Orden</th><th>Fecha</th><th>Cliente</th><th>Entrega</th><th>Estado</th><th class="text-end">Total</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@p.OrdenCompra</td>
+                        <td class="small">@p.Fecha.ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>
+                            <div>@(p.Usuario?.NombreCompleto ?? p.NombreReceptor) @if (p.EsInvitado) { <span class="badge bg-light text-dark border">Invitado</span> }</div>
+                            <div class="small text-muted">@p.EmailContacto</div>
+                        </td>
+                        <td class="small">@p.TipoEntrega.Nombre()</td>
+                        <td><partial name="_EstadoPedido" model="p.Estado" /></td>
+                        <td class="text-end">@p.Total.Clp()</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Detalle" asp-route-id="@p.Id">Ver</a></td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No hay pedidos.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+@{
+    ViewData["Title"] = "Cambios, devoluciones y garantía";
+    ViewData["Descripcion"] = "Política de cambios y devoluciones de El Maestro Online: 10 días de derecho a retracto y 6 meses de garantía legal (Ley 19.496 y Ley 21.398).";
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">↩️ Compra tranquilo</span>
+        <h1 class="h2 fw-bold mb-1">Cambios, devoluciones y garantía</h1>
+        <p class="mb-0">Si algo no resultó como esperabas, lo solucionamos. Estas son tus opciones según la Ley del Consumidor.</p>
+    </header>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4" data-anim="subir">
+            <div class="beneficio h-100 align-items-start">
+                <span class="icono">10</span>
+                <div><strong>Días de retracto</strong><span>Desde que recibes el producto, sin uso y con su embalaje. Ley 19.496, art. 3 bis.</span></div>
+            </div>
+        </div>
+        <div class="col-md-4" data-anim="subir" style="--retraso:.1s">
+            <div class="beneficio h-100 align-items-start">
+                <span class="icono">6</span>
+                <div><strong>Meses de garantía legal</strong><span>Si el producto falla: cambio, reparación o devolución del dinero, a tu elección.</span></div>
+            </div>
+        </div>
+        <div class="col-md-4" data-anim="subir" style="--retraso:.2s">
+            <div class="beneficio h-100 align-items-start">
+                <span class="icono">$0</span>
+                <div><strong>Retiro sin costo</strong><span>Si el producto viene con falla o no corresponde a lo comprado, el retiro lo pagamos nosotros.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="texto-legal" data-anim="subir">
+        <h2>Derecho a retracto (10 días)</h2>
+        <p>
+            En las compras a distancia puedes arrepentirte dentro de los <strong>10 días</strong> siguientes a la recepción del producto (<span class="ley">art. 3 bis, letra b, Ley 19.496</span>).
+            El producto debe estar sin uso, con sus accesorios y embalaje original. Te devolvemos el total pagado (incluido el despacho) al mismo medio de pago, dentro de 10 días
+            desde que recibimos el producto. El costo de devolución, en este caso, es del cliente.
+        </p>
+
+        <h2>Garantía legal (6 meses)</h2>
+        <p>
+            Si el producto presenta una falla, no cumple con lo prometido o no corresponde a lo que compraste, tienes <strong>6 meses</strong> desde la recepción para elegir entre:
+            <strong>cambio</strong>, <strong>reparación gratuita</strong> o <strong>devolución del dinero</strong> (<span class="ley">arts. 19, 20 y 21 de la Ley 19.496, plazo ampliado por la Ley 21.398 "Pro Consumidor"</span>).
+            Las herramientas eléctricas pueden además tener garantía del fabricante, que se suma a la legal.
+        </p>
+
+        <h2>Cómo hacer una solicitud</h2>
+        <ol>
+            <li>Escríbenos en el <a asp-controller="Contacto" asp-action="Index" asp-route-asunto="Devolucion">formulario de contacto</a> eligiendo "Cambios, devoluciones o garantía" e indica tu número de pedido.</li>
+            <li>Te respondemos en un máximo de 2 días hábiles con las instrucciones de envío o retiro.</li>
+            <li>Revisamos el producto y te confirmamos el cambio, la reparación o la devolución del dinero.</li>
+        </ol>
+
+        <h2>Productos que no aplican al retracto</h2>
+        <p>
+            Productos fabricados a medida (por ejemplo, pinturas preparadas en un color a pedido) o que por su naturaleza no pueden devolverse (materiales ya mezclados o cortados).
+            Esto se informa en la ficha del producto antes de la compra. La garantía legal por fallas aplica siempre.
+        </p>
+
+        <h2>¿No quedaste conforme?</h2>
+        <p class="mb-0">Puedes presentar un reclamo ante el <strong>SERNAC</strong> (www.sernac.cl). Igual nos encantaría que nos des la oportunidad de solucionarlo antes 🧡.</p>
+    </div>
+</div>

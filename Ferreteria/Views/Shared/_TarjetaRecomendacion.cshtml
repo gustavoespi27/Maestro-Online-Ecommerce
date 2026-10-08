@@ -1,0 +1,8 @@
+@model Recomendacion
+@* Tarjeta de producto recomendado: muestra el motivo de la recomendación (transparencia hacia el cliente) *@
+<div class="h-100 d-flex flex-column">
+    <span class="motivo-recomendacion" title="@Model.Motivo">✨ @Model.Motivo</span>
+    <div class="flex-grow-1">
+        <partial name="_TarjetaProducto" model="Model.Producto" />
+    </div>
+</div>

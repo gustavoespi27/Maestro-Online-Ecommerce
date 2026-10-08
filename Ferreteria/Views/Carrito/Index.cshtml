@@ -1,0 +1,125 @@
+@model CarritoVM
+@{
+    ViewData["Title"] = "Carrito";
+    var faltaParaGratis = Model.DespachoGratisDesde - Model.Subtotal;
+}
+
+<div class="container my-3">
+    <h1 class="h3 mb-4">Tu carrito</h1>
+
+    @if (Model.EstaVacio)
+    {
+        <div class="text-center py-5">
+            <p class="text-muted mb-3">Tu carrito está vacío.</p>
+            <a class="btn btn-naranja" asp-controller="Productos" asp-action="Index">Ir al catálogo</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var l in Model.Lineas)
+                        {
+                            <li class="list-group-item py-3">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <img src="@(l.Producto.ImagenUrl ?? "/img/productos/sin-imagen.svg")" alt="" class="miniatura" />
+                                    <div class="flex-grow-1">
+                                        <a class="fw-semibold text-dark" asp-controller="Productos" asp-action="Detalle" asp-route-id="@l.Producto.Id">@l.Producto.Nombre</a>
+                                        <div class="small text-muted">@l.Producto.Precio.Clp() c/u</div>
+                                        @if (!l.StockSuficiente)
+                                        {
+                                            <div class="small text-danger">
+                                                @(l.Producto.Stock == 0 || !l.Producto.Activo ? "Producto sin stock: quítalo para continuar." : $"Solo quedan {l.Producto.Stock} unidades.")
+                                            </div>
+                                        }
+                                    </div>
+                                    <form asp-action="Actualizar" method="post" class="d-flex gap-1">
+                                        <input type="hidden" name="productoId" value="@l.Producto.Id" />
+                                        <label class="visually-hidden" for="cant-@l.Producto.Id">Cantidad</label>
+                                        <input id="cant-@l.Producto.Id" type="number" name="cantidad" value="@l.Cantidad" min="1" max="@Math.Max(1, l.Producto.Stock)"
+                                               class="form-control form-control-sm" style="width:70px" data-autoenviar />
+                                    </form>
+                                    <div class="text-end fw-semibold" style="min-width:90px">@l.Subtotal.Clp()</div>
+                                    <form asp-action="Quitar" method="post">
+                                        <input type="hidden" name="productoId" value="@l.Producto.Id" />
+                                        <button type="submit" class="btn btn-sm btn-link text-danger" aria-label="Quitar">✕</button>
+                                    </form>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="d-flex justify-content-between mt-3">
+                    <a asp-controller="Productos" asp-action="Index">← Seguir comprando</a>
+                    <form asp-action="Vaciar" method="post">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Vaciar carrito</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card resumen">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Resumen</h2>
+                        <div class="d-flex justify-content-between"><span>Subtotal</span><span>@Model.Subtotal.Clp()</span></div>
+                        <div class="d-flex justify-content-between">
+                            <span>Despacho</span>
+                            <span>@(Model.CostoDespacho == 0 ? "Gratis" : Model.CostoDespacho.Clp())</span>
+                        </div>
+                        <div class="mt-2">
+                            @if (faltaParaGratis > 0)
+                            {
+                                <div class="small mb-1">🚚 Te faltan <strong>@faltaParaGratis.Clp()</strong> para despacho gratis.</div>
+                            }
+                            else
+                            {
+                                <div class="small mb-1 text-success fw-semibold">🎉 ¡Tienes despacho gratis!</div>
+                            }
+                            <div class="progreso-despacho"><div style="width:@(Math.Min(100, Model.Subtotal * 100 / Math.Max(1, Model.DespachoGratisDesde)))%"></div></div>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fs-5 fw-bold"><span>Total</span><span>@Model.Total.Clp()</span></div>
+                        <div class="small text-muted mb-3">Costo referencial para la Región Metropolitana. El despacho se calcula según tu región en el siguiente paso (<a asp-controller="Info" asp-action="Envios">ver tarifas</a>); el retiro en tienda es gratis.</div>
+                        @if (Model.TieneProblemasDeStock)
+                        {
+                            <button class="btn btn-secondary w-100" disabled>Revisa el stock para continuar</button>
+                        }
+                        else
+                        {
+                            <a class="btn btn-naranja w-100 btn-lg" asp-controller="Checkout" asp-action="Index">Ir a pagar</a>
+                        }
+                        @if (User.Identity?.IsAuthenticated != true)
+                        {
+                            <div class="small text-muted mt-2 text-center">
+                                Puedes comprar como invitado, sin registrarte, o <a asp-controller="Cuenta" asp-action="Login" asp-route-returnUrl="/Checkout">ingresar a tu cuenta</a>.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Recomendaciones.Any())
+        {
+            <section class="my-5">
+                <div class="cabecera-seccion" data-anim="subir">
+                    <div>
+                        <span class="antetitulo">✨ Recomendado para tu carrito</span>
+                        <h2 class="titulo-seccion mb-0">Completa tu compra</h2>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    @{ var i = 0; }
+                    @foreach (var r in Model.Recomendaciones)
+                    {
+                        <div class="col-6 col-md-3" data-anim="subir" style="--retraso:@((i++) * 0.08)s">
+                            <partial name="_TarjetaRecomendacion" model="r" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>

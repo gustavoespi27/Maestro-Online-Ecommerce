@@ -1,0 +1,62 @@
+@inject Ferreteria.Data.ApplicationDbContext Db
+@{
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+    var pendientes = Db.MensajesContacto.Count(m => !m.Atendido);
+    string Activo(string c) => controlador == c ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin El Maestro Online</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/secciones.css" asp-append-version="true" />
+    <link rel="icon" href="~/img/logo.svg" type="image/svg+xml" />
+</head>
+<body class="admin">
+    <nav class="navbar navbar-dark encabezado px-3">
+        <a class="navbar-brand d-flex align-items-center gap-2" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+            <img src="~/img/logo.svg" alt="" width="34" height="34" />
+            <span class="marca-texto"><strong>El Maestro</strong><small>panel admin</small></span>
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <a class="text-white-50 small d-none d-md-inline" asp-area="" asp-controller="Home" asp-action="Index" target="_blank">Ver tienda ↗</a>
+            <span class="text-white small d-none d-md-inline">@User.Identity?.Name</span>
+            <form asp-area="" asp-controller="Cuenta" asp-action="Logout" method="post">
+                <button class="btn btn-sm btn-outline-light">Salir</button>
+            </form>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-md-3 col-lg-2 menu-admin py-3">
+                <nav class="nav flex-column">
+                    <a class="nav-link @Activo("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Resumen</a>
+                    <a class="nav-link @Activo("Pedidos")" asp-area="Admin" asp-controller="Pedidos" asp-action="Index">Pedidos</a>
+                    <a class="nav-link @Activo("Productos")" asp-area="Admin" asp-controller="Productos" asp-action="Index">Productos</a>
+                    <a class="nav-link @Activo("Categorias")" asp-area="Admin" asp-controller="Categorias" asp-action="Index">Categorías</a>
+                    <a class="nav-link @Activo("Clientes")" asp-area="Admin" asp-controller="Clientes" asp-action="Index">Clientes</a>
+                    <a class="nav-link @Activo("Mensajes")" asp-area="Admin" asp-controller="Mensajes" asp-action="Index">
+                        Mensajes @if (pendientes > 0) { <span class="badge rounded-pill bg-danger ms-1">@pendientes</span> }
+                    </a>
+                    <a class="nav-link @Activo("Encuesta")" asp-area="Admin" asp-controller="Encuesta" asp-action="Index">Encuesta UTAUT</a>
+                </nav>
+            </aside>
+            <main class="col-md-9 col-lg-10 py-4 px-md-4">
+                <partial name="_Mensajes" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

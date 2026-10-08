@@ -1,0 +1,108 @@
+@model Pedido
+@{
+    ViewData["Title"] = $"Pedido {Model.OrdenCompra}";
+    var siguiente = PedidosController.SiguienteEstado(Model);
+    var anulable = Model.Estado is EstadoPedido.PendientePago or EstadoPedido.Pagado or EstadoPedido.EnPreparacion;
+}
+
+<a asp-action="Index" class="small">← Pedidos</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-4 gap-2">
+    <h1 class="h3 mb-0">Pedido @Model.OrdenCompra <partial name="_EstadoPedido" model="Model.Estado" /></h1>
+    <div class="d-flex gap-2">
+        @if (siguiente == EstadoPedido.Despachado)
+        {
+            <form asp-action="Avanzar" asp-route-id="@Model.Id" method="post" class="d-flex flex-wrap gap-2 align-items-center">
+                <label class="visually-hidden" for="transportista">Transportista</label>
+                <select id="transportista" name="transportista" class="form-select form-select-sm" style="width:auto">
+                    @foreach (var tr in Envios.Transportistas) { <option>@tr</option> }
+                </select>
+                <label class="visually-hidden" for="codigoSeguimiento">Código de seguimiento</label>
+                <input id="codigoSeguimiento" name="codigoSeguimiento" class="form-control form-control-sm" style="width:190px" placeholder="Código (vacío = automático)" />
+                <button class="btn btn-naranja">Marcar como "Despachado"</button>
+            </form>
+        }
+        else if (siguiente is not null)
+        {
+            <form asp-action="Avanzar" asp-route-id="@Model.Id" method="post">
+                <button class="btn btn-naranja">Marcar como "@siguiente.Value.Nombre()"</button>
+            </form>
+        }
+        @if (anulable)
+        {
+            <form asp-action="Anular" asp-route-id="@Model.Id" method="post" data-confirmar="¿Anular el pedido y devolver el stock?">
+                <button class="btn btn-outline-danger">Anular pedido</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body small">
+            <h2 class="h6 fw-bold">Cliente</h2>
+            @if (Model.EsInvitado)
+            {
+                <div><span class="badge bg-light text-dark border">Compra como invitado</span></div>
+                <div>@Model.NombreReceptor</div>
+            }
+            else
+            {
+                <div>@Model.Usuario?.NombreCompleto</div>
+            }
+            <div>@Model.EmailContacto</div>
+            @if (!string.IsNullOrEmpty(Model.Usuario?.Rut)) { <div>RUT: @Model.Usuario.Rut</div> }
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body small">
+            <h2 class="h6 fw-bold">Entrega</h2>
+            <div class="fw-semibold">@Model.TipoEntrega.Nombre()</div>
+            <div>@Model.NombreReceptor · @Model.Telefono</div>
+            @if (Model.TipoEntrega == TipoEntrega.Despacho) { <div>@Model.Direccion, @Model.Comuna@(Model.Region is null ? "" : ", " + Model.Region)</div> }
+            @if (Model.FechaEstimadaEntrega.HasValue) { <div class="mt-1">Entrega estimada: <strong>@Model.FechaEstimadaEntrega.Value.ToString("dd-MM-yyyy")</strong></div> }
+            @if (Model.CodigoSeguimiento is not null) { <div>@Model.Transportista · <strong>@Model.CodigoSeguimiento</strong></div> }
+            @if (Model.FechaEntrega.HasValue) { <div class="text-success">Entregado el @Model.FechaEntrega.Value.ToString("dd-MM-yyyy HH:mm")</div> }
+            @if (!string.IsNullOrEmpty(Model.Notas)) { <div class="text-muted mt-1">Notas: @Model.Notas</div> }
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body small">
+            <h2 class="h6 fw-bold">Pago</h2>
+            <div>Creado: @Model.Fecha.ToString("dd-MM-yyyy HH:mm")</div>
+            @if (Model.FechaPago.HasValue)
+            {
+                <div>Pagado: @Model.FechaPago.Value.ToString("dd-MM-yyyy HH:mm")</div>
+                <div>Medio: @Model.MetodoPago (@Model.TipoPagoWebpay@(Model.Cuotas > 0 ? $", {Model.Cuotas} cuotas" : ""))</div>
+                <div>Autorización: @Model.CodigoAutorizacion</div>
+                <div>Tarjeta: **** @Model.UltimosDigitosTarjeta</div>
+            }
+            else
+            {
+                <div class="text-muted">Sin pago registrado.</div>
+            }
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead class="table-light"><tr><th>SKU</th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr></thead>
+        <tbody>
+            @foreach (var d in Model.Detalles)
+            {
+                <tr>
+                    <td class="small">@d.Producto?.Sku</td>
+                    <td>@d.NombreProducto</td>
+                    <td class="text-center">@d.Cantidad</td>
+                    <td class="text-end">@d.PrecioUnitario.Clp()</td>
+                    <td class="text-end">@d.Subtotal.Clp()</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr><td colspan="4" class="text-end">Subtotal</td><td class="text-end">@Model.Subtotal.Clp()</td></tr>
+            <tr><td colspan="4" class="text-end">Despacho</td><td class="text-end">@Model.CostoDespacho.Clp()</td></tr>
+            <tr class="fw-bold"><td colspan="4" class="text-end">Total</td><td class="text-end">@Model.Total.Clp()</td></tr>
+        </tfoot>
+    </table>
+</div>

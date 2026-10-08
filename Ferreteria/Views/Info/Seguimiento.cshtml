@@ -1,0 +1,37 @@
+@model Pedido?
+@{
+    ViewData["Title"] = "Seguimiento de envío";
+    ViewData["Descripcion"] = "Revisa en qué etapa está tu pedido de El Maestro Online con tu código de seguimiento o número de orden.";
+    ViewData["NoIndex"] = true;
+}
+
+<div class="container my-4" style="max-width:900px">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">📍 Seguimiento</span>
+        <h1 class="h2 fw-bold mb-1">¿Dónde está mi pedido?</h1>
+        <p class="mb-3">Ingresa tu código de seguimiento (o el número de orden) y el correo con el que compraste.</p>
+        <form method="get" class="row g-2">
+            <div class="col-md-5">
+                <label for="codigo" class="visually-hidden">Código de seguimiento u orden de compra</label>
+                <input id="codigo" name="codigo" class="form-control form-control-lg" placeholder="Ej: MO2610081234567 o F2610…" value="@ViewBag.Codigo" required />
+            </div>
+            <div class="col-md-5">
+                <label for="email" class="visually-hidden">Correo</label>
+                <input id="email" name="email" type="email" class="form-control form-control-lg" placeholder="tucorreo@ejemplo.cl" value="@ViewBag.Email" required />
+            </div>
+            <div class="col-md-2 d-grid"><button class="btn btn-naranja btn-lg">Buscar</button></div>
+        </form>
+    </header>
+
+    @if (ViewBag.NoEncontrado == true)
+    {
+        <div class="alert alert-warning" data-anim="zoom">
+            No encontramos un pedido con esos datos. Revisa el código y el correo, o <a asp-controller="Contacto" asp-action="Index" asp-route-asunto="Pedido">escríbenos</a>.
+        </div>
+    }
+
+    @if (Model is not null)
+    {
+        <partial name="_SeguimientoPedido" model="Model" />
+    }
+</div>

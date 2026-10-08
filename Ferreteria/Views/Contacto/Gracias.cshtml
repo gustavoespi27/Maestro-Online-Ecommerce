@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Mensaje enviado";
+    ViewData["NoIndex"] = true;
+}
+<div class="container my-5 text-center" style="max-width:620px">
+    <div class="icono-resultado exito">✓</div>
+    <h1 class="h3 fw-bold">¡Recibimos tu mensaje!</h1>
+    @if (ViewBag.Numero is int n && n > 0)
+    {
+        <p class="text-muted mb-1">Número de solicitud: <strong>#@n.ToString("00000")</strong></p>
+    }
+    <p class="text-muted">Te responderemos al correo que indicaste en menos de 24 horas hábiles.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+        <a class="btn btn-naranja" asp-controller="Productos" asp-action="Index">Seguir comprando</a>
+        <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Ir al inicio</a>
+    </div>
+</div>

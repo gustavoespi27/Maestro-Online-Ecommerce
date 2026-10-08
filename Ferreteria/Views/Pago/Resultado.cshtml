@@ -1,0 +1,114 @@
+@model Pedido
+@{
+    var acceso = ViewBag.Acceso as string;
+    ViewData["NoIndex"] = true;
+    var pagado = Model.Estado is EstadoPedido.Pagado or EstadoPedido.EnPreparacion or EstadoPedido.Despachado or EstadoPedido.Entregado;
+    ViewData["Title"] = pagado ? "¡Compra exitosa!" : "Pago no realizado";
+    var tipoPago = Model.TipoPagoWebpay switch
+    {
+        "VD" => "Débito",
+        "VP" => "Prepago",
+        "VN" => "Crédito sin cuotas",
+        "VC" or "SI" or "S2" or "NC" => "Crédito en cuotas",
+        _ => Model.TipoPagoWebpay
+    };
+}
+
+<div class="container my-4" style="max-width:720px">
+    @if (pagado)
+    {
+        <div class="text-center mb-4">
+            <div class="icono-resultado exito">✓</div>
+            <h1 class="h3">¡Gracias por tu compra!</h1>
+            <p class="text-muted">Tu pago fue aprobado. @(Model.TipoEntrega == TipoEntrega.RetiroEnTienda ? "Te avisaremos cuando tu pedido esté listo para retiro." : "Prepararemos tu despacho a la brevedad.")</p>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase fw-bold mb-3">Comprobante de pago</h2>
+                <dl class="row small mb-0">
+                    <dt class="col-sm-5">Orden de compra</dt><dd class="col-sm-7">@Model.OrdenCompra</dd>
+                    <dt class="col-sm-5">Monto pagado</dt><dd class="col-sm-7">@Model.Total.Clp()</dd>
+                    <dt class="col-sm-5">Código de autorización</dt><dd class="col-sm-7">@Model.CodigoAutorizacion</dd>
+                    <dt class="col-sm-5">Fecha</dt><dd class="col-sm-7">@Model.FechaPago?.ToString("dd-MM-yyyy HH:mm")</dd>
+                    <dt class="col-sm-5">Tipo de pago</dt><dd class="col-sm-7">@tipoPago</dd>
+                    @if (Model.Cuotas > 0)
+                    {
+                        <dt class="col-sm-5">Cuotas</dt><dd class="col-sm-7">@Model.Cuotas</dd>
+                    }
+                    <dt class="col-sm-5">Tarjeta</dt><dd class="col-sm-7">**** **** **** @Model.UltimosDigitosTarjeta</dd>
+                </dl>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mb-4">
+            <div class="icono-resultado error">!</div>
+            <h1 class="h3">@(Model.Estado == EstadoPedido.PendientePago ? "Tu pedido está pendiente de pago" : "No se pudo completar el pago")</h1>
+            <p class="text-muted">
+                @switch (Model.Estado)
+                {
+                    case EstadoPedido.Rechazado:
+                        <span>La transacción fue rechazada. Puede deberse a saldo insuficiente o a datos incorrectos de la tarjeta. No se realizó ningún cargo.</span>
+                        break;
+                    case EstadoPedido.Anulado:
+                        <span>El pago fue anulado. No se realizó ningún cargo.</span>
+                        break;
+                    default:
+                        <span>Puedes intentar pagarlo nuevamente.</span>
+                        break;
+                }
+            </p>
+            @if (Model.Estado == EstadoPedido.PendientePago)
+            {
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <a class="btn btn-naranja" asp-action="Iniciar" asp-route-id="@Model.Id" asp-route-acceso="@acceso">Reintentar pago</a>
+                    @if (!string.IsNullOrEmpty(Model.TokenPago))
+                    {
+                        <form asp-action="Verificar" asp-route-id="@Model.Id" asp-route-acceso="@acceso" method="post">
+                            <button class="btn btn-outline-secondary">Ya pagué: verificar de nuevo</button>
+                        </form>
+                    }
+                </div>
+            }
+            else
+            {
+                <a class="btn btn-naranja" asp-controller="Productos" asp-action="Index">Volver a la tienda</a>
+            }
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h6 text-uppercase fw-bold mb-3">Detalle del pedido</h2>
+            <table class="table table-sm small mb-0">
+                <tbody>
+                    @foreach (var d in Model.Detalles)
+                    {
+                        <tr><td>@d.Cantidad × @d.NombreProducto</td><td class="text-end">@d.Subtotal.Clp()</td></tr>
+                    }
+                    <tr><td>Despacho</td><td class="text-end">@(Model.CostoDespacho == 0 ? "Gratis" : Model.CostoDespacho.Clp())</td></tr>
+                    <tr class="fw-bold"><td>Total</td><td class="text-end">@Model.Total.Clp()</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model.EsInvitado)
+    {
+        <div class="card mt-3 border-0" style="background:var(--naranja-suave)">
+            <div class="card-body small">
+                <strong>Compraste como invitado.</strong> Guarda tu número de orden <strong>@Model.OrdenCompra</strong>:
+                con él y tu correo (@Model.EmailInvitado) puedes <a asp-controller="Info" asp-action="Seguimiento" asp-route-codigo="@Model.OrdenCompra" asp-route-email="@Model.EmailInvitado">seguir tu pedido</a>.
+                ¿Quieres comprar más rápido la próxima vez? <a asp-controller="Cuenta" asp-action="Registro">Crea tu cuenta gratis</a>.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mt-4">
+            <a asp-controller="Pedidos" asp-action="Index">Ver mis pedidos</a>
+        </div>
+    }
+</div>

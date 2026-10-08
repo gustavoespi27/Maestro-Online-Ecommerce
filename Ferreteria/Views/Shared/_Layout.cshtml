@@ -1,0 +1,322 @@
+@using Microsoft.Extensions.Options
+@using System.Text.Json
+@inject CarritoService Carrito
+@inject IOptions<OpcionesTienda> OpcionesTienda
+@{
+    var tienda = OpcionesTienda.Value;
+    var cantidadCarrito = Carrito.CantidadTotal();
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+    var accion = ViewContext.RouteData.Values["action"]?.ToString();
+    var soloOfertas = string.Equals(Context.Request.Query["ofertas"], "true", StringComparison.OrdinalIgnoreCase);
+
+    // ---------- SEO ----------
+    var urlBase = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var titulo = ViewData["Title"] is string t && t != "Inicio"
+        ? $"{t} | {tienda.Nombre}"
+        : $"{tienda.Nombre} | Ferretería online con despacho a todo Chile";
+    var descripcion = ViewData["Descripcion"] as string
+        ?? "Ferretería online El Maestro: herramientas manuales y eléctricas, pinturas, gasfitería, electricidad y materiales de construcción. Ofertas todas las semanas, despacho gratis sobre $50.000 y pago seguro con Webpay.";
+    var imagenSocial = ViewData["ImagenSocial"] as string ?? "/img/og-imagen.jpg";
+    if (!imagenSocial.StartsWith("http")) imagenSocial = urlBase + imagenSocial;
+    var canonical = ViewData["Canonical"] as string ?? (urlBase + Context.Request.Path);
+    var tipoOg = ViewData["TipoOg"] as string ?? "website";
+    // Páginas privadas o transaccionales no deben aparecer en Google
+    var noIndex = ViewData["NoIndex"] is true || controlador is "Carrito" or "Checkout" or "Cuenta" or "Pago" or "Pedidos";
+
+    var datosTienda = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@graph"] = new object[]
+        {
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "HardwareStore",
+                ["@id"] = urlBase + "/#tienda",
+                ["name"] = tienda.Nombre,
+                ["url"] = urlBase + "/",
+                ["logo"] = urlBase + "/img/logo-512.png",
+                ["image"] = urlBase + "/img/og-imagen.jpg",
+                ["email"] = tienda.Email,
+                ["telephone"] = tienda.TelefonoVisible,
+                ["priceRange"] = "$$",
+                ["currenciesAccepted"] = "CLP",
+                ["paymentAccepted"] = "Tarjeta de crédito, Tarjeta de débito, Webpay",
+                ["address"] = new Dictionary<string, object?> { ["@type"] = "PostalAddress", ["streetAddress"] = tienda.Direccion, ["addressCountry"] = "CL" }
+            },
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "WebSite",
+                ["name"] = tienda.Nombre,
+                ["url"] = urlBase + "/",
+                ["inLanguage"] = "es-CL",
+                ["potentialAction"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "SearchAction",
+                    ["target"] = urlBase + "/Productos?q={search_term_string}",
+                    ["query-input"] = "required name=search_term_string"
+                }
+            }
+        }
+    };
+}
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@titulo</title>
+    <meta name="description" content="@descripcion" />
+    <meta name="robots" content="@(noIndex ? "noindex, nofollow" : "index, follow, max-image-preview:large")" />
+    <link rel="canonical" href="@canonical" />
+    <meta name="theme-color" content="#15181d" />
+    <meta name="author" content="@tienda.Nombre" />
+
+    <!-- Open Graph / redes sociales -->
+    <meta property="og:site_name" content="@tienda.Nombre" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:type" content="@tipoOg" />
+    <meta property="og:title" content="@titulo" />
+    <meta property="og:description" content="@descripcion" />
+    <meta property="og:url" content="@canonical" />
+    <meta property="og:image" content="@imagenSocial" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@titulo" />
+    <meta name="twitter:description" content="@descripcion" />
+    <meta name="twitter:image" content="@imagenSocial" />
+
+    <link rel="icon" href="~/img/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="~/img/logo-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="~/img/logo-192.png" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/secciones.css" asp-append-version="true" />
+    <script nonce="@Nonce.Valor">document.documentElement.classList.add('js');</script>
+
+    <script type="application/ld+json">@Html.Raw(JsonSerializer.Serialize(datosTienda))</script>
+    @await RenderSectionAsync("Seo", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="progreso-scroll" aria-hidden="true"></div>
+
+    <div class="barra-superior" role="note">
+        <div class="cinta">
+            @for (var i = 0; i < 2; i++)
+            {
+                <span aria-hidden="@(i == 1 ? "true" : "false")">🔥 HOT SALE: descuentos imperdibles en herramientas toda la semana</span>
+                <span aria-hidden="@(i == 1 ? "true" : "false")">🚚 Despacho gratis en compras sobre $50.000</span>
+                <span aria-hidden="@(i == 1 ? "true" : "false")">🏪 Retiro en tienda sin costo</span>
+                <span aria-hidden="@(i == 1 ? "true" : "false")">💳 Paga seguro con Webpay: débito, crédito y prepago</span>
+                <span aria-hidden="@(i == 1 ? "true" : "false")">🛠️ Asesoría de maestros por WhatsApp</span>
+            }
+        </div>
+    </div>
+
+    <header class="encabezado sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark" aria-label="Navegación principal">
+            <div class="container">
+                <a class="navbar-brand marca-logo" asp-area="" asp-controller="Home" asp-action="Index" aria-label="@tienda.Nombre - inicio">
+                    <img src="~/img/logo.svg" alt="" width="44" height="44" />
+                    <span class="marca-texto"><strong>El Maestro</strong><small>online</small></span>
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
+                        aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="menuPrincipal">
+                    <form class="buscador d-flex mx-lg-4 my-2 my-lg-0 flex-grow-1" asp-area="" asp-controller="Productos" asp-action="Index" method="get" role="search">
+                        <input class="form-control" type="search" name="q" placeholder="¿Qué necesitas, maestro? Taladros, pinturas, cables..." aria-label="Buscar productos" value="@Context.Request.Query["q"]" />
+                        <button class="btn btn-naranja" type="submit" aria-label="Buscar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                        </button>
+                    </form>
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-enlace enlace-ofertas @(soloOfertas ? "active" : "")" asp-area="" asp-controller="Productos" asp-action="Index" asp-route-ofertas="true"><span class="llama">🔥</span> Ofertas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-enlace @(controlador == "Productos" && !soloOfertas ? "active" : "")" asp-area="" asp-controller="Productos" asp-action="Index">Catálogo</a>
+                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Mi cuenta
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><span class="dropdown-item-text small text-muted">@User.Identity.Name</span></li>
+                                    @if (User.IsInRole(SeedData.RolAdmin))
+                                    {
+                                        <li><a class="dropdown-item fw-semibold" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Panel de administración</a></li>
+                                    }
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Pedidos" asp-action="Index">Mis pedidos</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Cuenta" asp-action="Perfil">Mis datos</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-area="" asp-controller="Cuenta" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link nav-enlace" asp-area="" asp-controller="Cuenta" asp-action="Login">Ingresar</a></li>
+                            <li class="nav-item"><a class="nav-link nav-enlace" asp-area="" asp-controller="Cuenta" asp-action="Registro">Crear cuenta</a></li>
+                        }
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link boton-carrito position-relative" id="botonCarrito" asp-area="" asp-controller="Carrito" asp-action="Index" aria-label="Carrito (@cantidadCarrito productos)">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /><path d="M2 3h3l2.7 12.4a1.5 1.5 0 0 0 1.5 1.1h8.9a1.5 1.5 0 0 0 1.4-1.1L21.5 8H6.2" /></svg>
+                                @if (cantidadCarrito > 0)
+                                {
+                                    <span class="badge rounded-pill contador-carrito">@cantidadCarrito</span>
+                                }
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="avisos-flotantes" aria-live="polite">
+        <partial name="_Mensajes" />
+    </div>
+
+    <main role="main" class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <footer class="pie mt-5">
+        <div class="container py-5">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <a class="marca-logo mb-3" asp-area="" asp-controller="Home" asp-action="Index">
+                        <img src="~/img/logo.svg" alt="" width="42" height="42" loading="lazy" />
+                        <span class="marca-texto"><strong>El Maestro</strong><small>online</small></span>
+                    </a>
+                    <p class="small mb-3">La ferretería de los que saben. Herramientas, materiales y asesoría de maestros, con despacho a todo Chile.</p>
+                    <div class="redes">
+                        <a href="#" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg></a>
+                        <a href="#" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-2.8 0-4 1.8-4 4.3V10H7v4h3v8h4v-8h3l.5-4H14V8.6c0-.4.2-.6.6-.6Z" /></svg></a>
+                        <a href="#" aria-label="TikTok"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.3c-1.5 0-2.9-.4-4-1.2v6.4a6 6 0 1 1-6-6c.3 0 .7 0 1 .1v3.4a2.7 2.7 0 1 0 1.8 2.5V3h3.2Z" /></svg></a>
+                        <a href="https://wa.me/@tienda.WhatsApp" aria-label="WhatsApp" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-1.7-.1-3-1-4.9-3.9-5.1-4.1-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.4.2.5.3.1.2.1.6-.1 1.2Z" /></svg></a>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="text-uppercase small fw-bold mb-3">Tienda</h6>
+                    <ul class="list-unstyled small mb-0 d-grid gap-2">
+                        <li><a asp-area="" asp-controller="Productos" asp-action="Index">Catálogo</a></li>
+                        <li><a asp-area="" asp-controller="Productos" asp-action="Index" asp-route-ofertas="true">Ofertas</a></li>
+                        <li><a asp-area="" asp-controller="Carrito" asp-action="Index">Carrito</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Nosotros">Quiénes somos</a></li>
+                        <li><a asp-area="" asp-controller="Encuesta" asp-action="Index">Danos tu opinión</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="text-uppercase small fw-bold mb-3">Ayuda</h6>
+                    <ul class="list-unstyled small mb-0 d-grid gap-2">
+                        <li><a asp-area="" asp-controller="Contacto" asp-action="Index">Contacto</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Envios">Envíos y despacho</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Seguimiento">Seguir mi pedido</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Devoluciones">Cambios y devoluciones</a></li>
+                        <li><a href="#" data-abrir-chat>Maestro Bot 🤖</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="text-uppercase small fw-bold mb-3">Legal</h6>
+                    <ul class="list-unstyled small mb-0 d-grid gap-2">
+                        <li><a asp-area="" asp-controller="Info" asp-action="Terminos">Términos y condiciones</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Privacidad">Política de privacidad</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Privacidad" asp-fragment="cookies">Cookies</a></li>
+                        <li><a asp-area="" asp-controller="Info" asp-action="Creditos">Créditos de imágenes</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="text-uppercase small fw-bold mb-3">Contacto</h6>
+                    <ul class="list-unstyled small mb-3 d-grid gap-2">
+                        <li><a href="mailto:@tienda.Email">✉️ Correo</a></li>
+                        <li><a href="https://wa.me/@tienda.WhatsApp" target="_blank" rel="noopener">💬 @tienda.TelefonoVisible</a></li>
+                        <li>🕗 Lun a Sáb, 9:00 a 19:00</li>
+                    </ul>
+                    <div class="medios-pago">
+                        <span>WEBPAY</span><span>VISA</span><span>MASTERCARD</span><span>REDCOMPRA</span>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4" />
+            <div class="d-flex flex-wrap justify-content-between gap-2 small">
+                <span>&copy; @DateTime.Now.Year @tienda.Nombre · @tienda.Direccion · Precios en pesos chilenos, IVA incluido.</span>
+                <span>Proyecto académico INACAP: tienda ficticia. ¿Reclamos? <a asp-area="" asp-controller="Contacto" asp-action="Index" asp-route-asunto="Reclamo">Escríbenos</a> o visita sernac.cl</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Botón flotante de contacto -->
+    <div class="contacto-flotante" id="contactoFlotante">
+        <div class="contacto-opciones" id="opcionesContacto">
+            <button type="button" class="contacto-opcion border-0 bg-transparent p-0" data-abrir-chat>
+                <span class="etiqueta-opcion">Maestro Bot · respuestas al instante</span>
+                <span class="circulo chatbot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="7" width="16" height="12" rx="3" /><path d="M12 3v4M9 12h.01M15 12h.01M9.5 15.5h5" stroke-linecap="round" /></svg></span>
+            </button>
+            <a class="contacto-opcion" href="https://wa.me/@tienda.WhatsApp?text=@Uri.EscapeDataString("Hola El Maestro Online, tengo una consulta")" target="_blank" rel="noopener">
+                <span class="etiqueta-opcion">WhatsApp · @tienda.TelefonoVisible</span>
+                <span class="circulo whatsapp"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-1.7-.1-3-1-4.9-3.9-5.1-4.1-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.4.2.5.3.1.2.1.6-.1 1.2Z" /></svg></span>
+            </a>
+            <a class="contacto-opcion" href="mailto:@tienda.Email?subject=@Uri.EscapeDataString("Consulta desde la web")">
+                <span class="etiqueta-opcion">Correo · @tienda.Email</span>
+                <span class="circulo correo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg></span>
+            </a>
+            <a class="contacto-opcion" asp-area="" asp-controller="Contacto" asp-action="Index">
+                <span class="etiqueta-opcion">Formulario de contacto</span>
+                <span class="circulo correo" style="background:var(--amarillo);color:var(--carbon)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H8l-4 4z" /><path d="M8 9h8M8 12h5" /></svg></span>
+            </a>
+        </div>
+        <span class="globo-contacto" id="globoContacto">¿Dudas? ¡Háblanos! 👋</span>
+        <button type="button" class="boton-contacto" id="botonContacto" aria-expanded="false" aria-controls="opcionesContacto" aria-label="Contactar a la tienda">
+            <svg class="icono-abrir" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.8 7L4 20.5l1.5-5A8 8 0 1 1 21 12Z" /><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" stroke-width="3" stroke-linecap="round" /></svg>
+            <svg class="icono-cerrar" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+    </div>
+
+    <!-- Chatbot "Maestro Bot" -->
+    <section class="ventana-chat" id="ventanaChat" role="dialog" aria-modal="false" aria-labelledby="tituloChat" aria-hidden="true">
+        <header class="chat-cabecera">
+            <img src="~/img/logo.svg" alt="" width="40" height="40" />
+            <div><strong id="tituloChat">Maestro Bot</strong><small>En línea · responde al instante</small></div>
+            <button type="button" id="cerrarChat" aria-label="Cerrar chat">✕</button>
+        </header>
+        <div class="chat-mensajes" id="mensajesChat" aria-live="polite"></div>
+        <div class="chat-sugerencias" id="sugerenciasChat"></div>
+        <form class="chat-formulario" id="formChat" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <label for="entradaChat" class="visually-hidden">Escribe tu pregunta</label>
+            <input id="entradaChat" maxlength="300" placeholder="Escribe tu pregunta…" />
+            <button type="submit" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg></button>
+        </form>
+        <div class="chat-aviso">Asistente automático. No compartas datos de tu tarjeta. <a asp-area="" asp-controller="Info" asp-action="Privacidad">Privacidad</a></div>
+    </section>
+
+    <!-- Aviso de cookies (solo técnicas) -->
+    <div class="banner-cookies d-none" id="bannerCookies" role="region" aria-label="Aviso de cookies">
+        🍪 Usamos solo cookies técnicas necesarias para el carrito y tu sesión. No usamos cookies publicitarias.
+        <a asp-area="" asp-controller="Info" asp-action="Privacidad" asp-fragment="cookies">Más información</a>
+        <div class="text-end mt-2"><button type="button" class="btn btn-sm btn-naranja px-3" id="aceptarCookies">Entendido</button></div>
+    </div>
+
+    <button type="button" class="volver-arriba" id="volverArriba" aria-label="Volver arriba">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 15 6-6 6 6" /></svg>
+    </button>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/chatbot.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

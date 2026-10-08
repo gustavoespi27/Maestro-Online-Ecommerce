@@ -1,0 +1,27 @@
+# Compilación
+bin/
+obj/
+publish/
+
+# Editores
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Secretos y configuración local (NUNCA se suben)
+.env
+appsettings.*.local.json
+*.pfx
+
+# Archivos subidos por el administrador
+Ferreteria/wwwroot/uploads/*
+!Ferreteria/wwwroot/uploads/.gitkeep
+
+# Documentos académicos (no forman parte del código)
+Ferreteria/Rubrica/
+
+# Sistema
+.DS_Store
+Thumbs.db

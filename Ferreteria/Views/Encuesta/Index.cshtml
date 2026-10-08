@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "Encuesta de experiencia";
+    ViewData["Descripcion"] = "Encuesta anónima de 3 minutos sobre tu experiencia con El Maestro Online.";
+    ViewData["NoIndex"] = true;
+    var form = ViewBag.Form as IFormCollection;
+    var faltantes = ViewBag.Faltantes as List<string> ?? new();
+    string? Previo(string campo) => form?[campo].ToString();
+    // Títulos neutros para los encuestados (no se muestra el nombre técnico del constructo para no sesgar)
+    var titulos = new Dictionary<string, string>
+    {
+        ["ED"] = "Utilidad del sitio", ["EE"] = "Facilidad de uso", ["IS"] = "Opinión de otras personas",
+        ["CF"] = "Recursos, confianza y apoyo", ["IU"] = "Tu intención de compra"
+    };
+    var totalItems = EncuestaUtaut.Constructos.Sum(c => c.Items.Length);
+    var n = 0;
+}
+
+<div class="container my-4" style="max-width:860px">
+    <header class="cabecera-info mb-3" data-anim="subir">
+        <span class="chip-suave mb-2">📝 3 minutos · anónima</span>
+        <h1 class="h2 fw-bold mb-1">¿Qué te parece El Maestro Online?</h1>
+        <p class="mb-0">
+            Tu opinión nos ayuda a mejorar. Te recomendamos <a class="text-warning" asp-controller="Home" asp-action="Index" target="_blank">recorrer el sitio</a> unos minutos antes de responder
+            (buscar un producto, agregarlo al carrito, probar el chatbot). No pedimos tu nombre ni tu correo.
+        </p>
+    </header>
+
+    @if (ViewBag.YaRespondio == true)
+    {
+        <div class="alert alert-info">Ya respondiste la encuesta desde este navegador. ¡Gracias! Si alguien más usa este equipo, puede responder igualmente.</div>
+    }
+    @if (ViewBag.Error is string error)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <form method="post" asp-action="Index" id="formEncuesta">
+        <div class="progreso-encuesta">
+            <div class="d-flex justify-content-between small fw-semibold mb-1"><span>Tu avance</span><span id="textoAvance">0 de @totalItems</span></div>
+            <div class="progreso-despacho"><div id="barraAvance" style="width:0%"></div></div>
+        </div>
+
+        <section class="pregunta-likert @(faltantes.Contains("datos") ? "falta" : "")" data-anim="subir">
+            <h2 class="h6 fw-bold mb-3">Sobre ti</h2>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label small" for="RangoEdad">Edad</label>
+                    <select class="form-select" id="RangoEdad" name="RangoEdad" required>
+                        <option value="">Selecciona…</option>
+                        @foreach (var o in EncuestaUtaut.RangosEdad) { <option selected="@(Previo("RangoEdad") == o)">@o</option> }
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label small" for="Genero">Género (opcional)</label>
+                    <select class="form-select" id="Genero" name="Genero">
+                        <option value="">Selecciona…</option>
+                        @foreach (var o in EncuestaUtaut.Generos) { <option selected="@(Previo("Genero") == o)">@o</option> }
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label small" for="FrecuenciaCompraOnline">¿Con qué frecuencia compras por internet?</label>
+                    <select class="form-select" id="FrecuenciaCompraOnline" name="FrecuenciaCompraOnline" required>
+                        <option value="">Selecciona…</option>
+                        @foreach (var o in EncuestaUtaut.Frecuencias) { <option selected="@(Previo("FrecuenciaCompraOnline") == o)">@o</option> }
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label small" for="Perfil">¿Para qué compras productos de ferretería?</label>
+                    <select class="form-select" id="Perfil" name="Perfil" required>
+                        <option value="">Selecciona…</option>
+                        @foreach (var o in EncuestaUtaut.Perfiles) { <option selected="@(Previo("Perfil") == o)">@o</option> }
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <p class="small text-muted mt-4 mb-2">Indica qué tan de acuerdo estás con cada afirmación: <strong>1 = muy en desacuerdo</strong> y <strong>5 = muy de acuerdo</strong>.</p>
+
+        @foreach (var c in EncuestaUtaut.Constructos)
+        {
+            <h2 class="h5 fw-bold mt-4 mb-2" data-anim="subir">@titulos[c.Sigla]</h2>
+            @foreach (var item in c.Items)
+            {
+                n++;
+                <fieldset class="pregunta-likert @(faltantes.Contains(item.Codigo) ? "falta" : "")" data-anim="subir">
+                    <legend class="fs-6 fw-semibold mb-0" style="float:none">@n. @item.Texto</legend>
+                    <div class="opciones-likert">
+                        @for (var v = 1; v <= 5; v++)
+                        {
+                            var id = $"{item.Codigo}_{v}";
+                            <input type="radio" name="@item.Codigo" id="@id" value="@v" required checked="@(Previo(item.Codigo) == v.ToString())" />
+                            <label for="@id"><strong>@v</strong><span>@EncuestaUtaut.Escala[v - 1]</span></label>
+                        }
+                    </div>
+                </fieldset>
+            }
+        }
+
+        <section class="pregunta-likert mt-4" data-anim="subir">
+            <label class="form-label fw-semibold" for="Comentario">¿Qué mejorarías del sitio? (opcional)</label>
+            <textarea class="form-control" id="Comentario" name="Comentario" rows="3" maxlength="500">@Previo("Comentario")</textarea>
+        </section>
+
+        <p class="small text-muted">Al enviar aceptas que tus respuestas anónimas se usen de forma agregada para mejorar el sitio y en el informe académico del proyecto (<a asp-controller="Info" asp-action="Privacidad" asp-fragment="encuesta">ver privacidad</a>).</p>
+        <button type="submit" class="btn btn-naranja btn-lg px-5 mb-5">Enviar mis respuestas</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script nonce="@Nonce.Valor">
+        (function () {
+            const form = document.getElementById('formEncuesta');
+            const nombres = [...new Set([...form.querySelectorAll('input[type=radio]')].map(r => r.name))];
+            const barra = document.getElementById('barraAvance'), texto = document.getElementById('textoAvance');
+            function actualizar() {
+                const listas = nombres.filter(n => form.querySelector(`input[name="${n}"]:checked`)).length;
+                barra.style.width = (listas / nombres.length * 100) + '%';
+                texto.textContent = `${listas} de ${nombres.length}`;
+            }
+            form.addEventListener('change', e => {
+                actualizar();
+                e.target.closest('.pregunta-likert')?.classList.remove('falta');
+            });
+            actualizar();
+        })();
+    </script>
+}

@@ -1,0 +1,116 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<OpcionesTienda> Opciones
+@{
+    ViewData["Title"] = "Términos y Condiciones";
+    ViewData["Descripcion"] = "Términos y condiciones de compra en El Maestro Online, conforme a la Ley 19.496 de Protección de los Derechos de los Consumidores.";
+    var t = Opciones.Value;
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">📄 Legal</span>
+        <h1 class="h2 fw-bold mb-1">Términos y Condiciones de uso y compra</h1>
+        <p class="mb-0">Última actualización: octubre de 2026. Léelos antes de comprar: al aceptarlos en el registro o en el pago quedan como parte del contrato.</p>
+    </header>
+
+    <div class="row g-4">
+        <aside class="col-lg-3 d-none d-lg-block">
+            <nav class="indice-legal" aria-label="Índice">
+                <strong class="small text-uppercase text-muted d-block mb-2">Contenido</strong>
+                <a href="#identificacion">1. Identificación del proveedor</a>
+                <a href="#aceptacion">2. Aceptación</a>
+                <a href="#cuenta">3. Cuenta de usuario</a>
+                <a href="#precios">4. Precios, ofertas y stock</a>
+                <a href="#compra">5. Proceso de compra</a>
+                <a href="#pago">6. Medios de pago</a>
+                <a href="#despacho">7. Despacho y retiro</a>
+                <a href="#retracto">8. Retracto y garantía</a>
+                <a href="#propiedad">9. Propiedad intelectual</a>
+                <a href="#responsabilidad">10. Responsabilidad</a>
+                <a href="#ley">11. Ley aplicable y reclamos</a>
+            </nav>
+        </aside>
+        <article class="col-lg-9">
+            <div class="texto-legal" data-anim="subir">
+                <div class="nota-academica mb-4">
+                    <strong>Proyecto académico:</strong> El Maestro Online es una tienda ficticia creada para la asignatura TIEL25 de INACAP.
+                    Los pagos se realizan en el ambiente de integración (pruebas) de Transbank y no generan cargos reales.
+                </div>
+
+                <h2 id="identificacion">1. Identificación del proveedor</h2>
+                <p>
+                    Razón social: El Maestro Online SpA (ficticia) · Dirección: @t.Direccion · Correo: <a href="mailto:@t.Email">@t.Email</a> ·
+                    WhatsApp: @t.TelefonoVisible. Conforme al <span class="ley">art. 12 A de la Ley 19.496</span>, informamos nuestros datos de contacto
+                    de forma clara y accesible antes de la compra.
+                </p>
+
+                <h2 id="aceptacion">2. Aceptación</h2>
+                <p>
+                    Para crear una cuenta o pagar un pedido debes aceptar expresamente estos Términos y la <a asp-action="Privacidad">Política de Privacidad</a>
+                    marcando la casilla correspondiente. El sitio registra la fecha de aceptación. Puedes descargar o imprimir este documento en cualquier momento
+                    desde esta página.
+                </p>
+
+                <h2 id="cuenta">3. Cuenta de usuario</h2>
+                <p>
+                    Eres responsable de mantener la confidencialidad de tu contraseña. Las contraseñas se almacenan cifradas (hash) mediante ASP.NET Core Identity
+                    y la cuenta se bloquea temporalmente tras 5 intentos fallidos para protegerte. Puedes modificar tus datos en "Mis datos" o pedir la eliminación de tu cuenta
+                    a través del <a asp-controller="Contacto" asp-action="Index">formulario de contacto</a>.
+                </p>
+
+                <h2 id="precios">4. Precios, ofertas y stock</h2>
+                <ul>
+                    <li>Todos los precios están en pesos chilenos e <strong>incluyen IVA</strong>. El costo de despacho se informa antes de pagar.</li>
+                    <li>En las ofertas se muestra el precio normal tachado y el precio rebajado. Cada oferta indica su vigencia (cuenta regresiva del Hot Sale) y
+                        se respeta el precio publicado al momento de la compra (<span class="ley">art. 13 y 35 de la Ley 19.496</span>).</li>
+                    <li>El stock se informa en tiempo real. Al confirmar el pedido, las unidades quedan reservadas; si el pago no se completa, vuelven al inventario.</li>
+                </ul>
+
+                <h2 id="compra">5. Proceso de compra</h2>
+                <p>
+                    Agregas productos al carrito → eliges despacho o retiro → aceptas estos Términos → pagas en Webpay. Tras el pago recibes un comprobante con el número de
+                    orden, el detalle y la fecha estimada de entrega, que puedes revisar en "Mis pedidos".
+                </p>
+
+                <h2 id="pago">6. Medios de pago</h2>
+                <p>
+                    Los pagos se procesan con <strong>Webpay Plus de Transbank</strong> (débito, crédito y prepago). El Maestro Online <strong>no recibe ni almacena</strong>
+                    los datos de tu tarjeta: solo guarda el código de autorización y los 4 últimos dígitos que entrega Transbank como comprobante.
+                </p>
+
+                <h2 id="despacho">7. Despacho y retiro en tienda</h2>
+                <p>
+                    Los costos y plazos por región se publican en <a asp-action="Envios">Envíos y despacho</a>. Los plazos se cuentan en días hábiles (lunes a sábado)
+                    desde la confirmación del pago. Si el pedido no llega en el plazo informado, puedes exigir la entrega, el cambio o la devolución del dinero.
+                </p>
+
+                <h2 id="retracto">8. Derecho a retracto y garantía legal</h2>
+                <p>
+                    Tienes <strong>10 días</strong> desde que recibes el producto para retractarte de la compra (<span class="ley">art. 3 bis, letra b, Ley 19.496</span>), y
+                    <strong>6 meses</strong> de garantía legal si el producto presenta fallas (<span class="ley">arts. 20 y 21, modificados por la Ley 21.398</span>).
+                    Revisa el detalle en la <a asp-action="Devoluciones">Política de cambios y devoluciones</a>.
+                </p>
+
+                <h2 id="propiedad">9. Propiedad intelectual</h2>
+                <p>
+                    El logo, el nombre "El Maestro Online", los textos y el diseño del sitio pertenecen al proyecto (<span class="ley">Ley 17.336 de Propiedad Intelectual</span>
+                    y <span class="ley">Ley 19.039 de Propiedad Industrial</span>). Las marcas de los productos (Bosch, Makita, Stanley, etc.) pertenecen a sus titulares y se mencionan
+                    solo para identificar los productos. Las fotografías provienen de Wikimedia Commons bajo licencias libres y se atribuyen en
+                    <a asp-action="Creditos">Créditos de imágenes</a>.
+                </p>
+
+                <h2 id="responsabilidad">10. Uso correcto del sitio</h2>
+                <p>
+                    No está permitido usar el sitio para fines fraudulentos, intentar acceder a cuentas ajenas o vulnerar su seguridad (<span class="ley">Ley 21.459 de Delitos Informáticos</span>).
+                    Los contratos celebrados por medios electrónicos tienen la misma validez que los celebrados por escrito (<span class="ley">Ley 19.799</span>).
+                </p>
+
+                <h2 id="ley">11. Ley aplicable y reclamos</h2>
+                <p>
+                    Estos Términos se rigen por las leyes de la República de Chile. Puedes escribirnos un reclamo en el <a asp-controller="Contacto" asp-action="Index" asp-route-asunto="Reclamo">formulario de contacto</a>
+                    (respondemos en un máximo de 5 días hábiles) y, si no quedas conforme, acudir al <strong>SERNAC</strong> (www.sernac.cl) o al Juzgado de Policía Local correspondiente.
+                </p>
+            </div>
+        </article>
+    </div>
+</div>

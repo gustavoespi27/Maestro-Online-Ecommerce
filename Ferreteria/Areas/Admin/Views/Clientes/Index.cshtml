@@ -1,0 +1,34 @@
+@model List<ClienteFilaVM>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<h1 class="h3 mb-3">Clientes <span class="text-muted fs-6">(@Model.Count)</span></h1>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Nombre</th><th>Correo</th><th>RUT</th><th>Teléfono</th><th>Registro</th><th class="text-center">Compras</th><th class="text-end">Total comprado</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@c.Nombre</td>
+                        <td>@c.Email</td>
+                        <td>@c.Rut</td>
+                        <td>@c.Telefono</td>
+                        <td class="small">@c.FechaRegistro.ToString("dd-MM-yyyy")</td>
+                        <td class="text-center">@c.Pedidos</td>
+                        <td class="text-end">@c.TotalComprado.Clp()</td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Aún no hay clientes registrados.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

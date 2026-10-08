@@ -1,0 +1,46 @@
+@model List<Pedido>
+@{
+    ViewData["Title"] = "Mis pedidos";
+}
+
+<div class="container my-3">
+    <h1 class="h3 mb-4">Mis pedidos</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <p class="text-muted">Aún no has hecho compras.</p>
+            <a class="btn btn-naranja" asp-controller="Productos" asp-action="Index">Ir al catálogo</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th>Orden</th><th>Fecha</th><th>Productos</th><th>Entrega</th><th>Estado</th><th class="text-end">Total</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@p.OrdenCompra</td>
+                            <td>@p.Fecha.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>@p.Detalles.Sum(d => d.Cantidad) unidad(es)</td>
+                            <td>@p.TipoEntrega.Nombre()</td>
+                            <td><partial name="_EstadoPedido" model="p.Estado" /></td>
+                            <td class="text-end">@p.Total.Clp()</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Detalle" asp-route-id="@p.Id">Ver</a>
+                                @if (p.Estado == EstadoPedido.PendientePago)
+                                {
+                                    <a class="btn btn-sm btn-naranja" asp-controller="Pago" asp-action="Iniciar" asp-route-id="@p.Id">Pagar</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

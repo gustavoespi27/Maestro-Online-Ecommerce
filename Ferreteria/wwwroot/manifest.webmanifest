@@ -1,0 +1,15 @@
+{
+  "name": "El Maestro Online",
+  "short_name": "El Maestro",
+  "description": "Ferretería online: herramientas y materiales con despacho a todo Chile.",
+  "lang": "es-CL",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#15181d",
+  "theme_color": "#ff6a13",
+  "icons": [
+    { "src": "/img/logo-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/logo-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/img/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,0 +1,57 @@
+@model PerfilVM
+@{
+    ViewData["Title"] = "Mis datos";
+}
+
+<div class="container my-4" style="max-width:640px">
+    <h1 class="h3 mb-3">Mis datos</h1>
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="Perfil" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="mb-3">
+                    <label class="form-label">Correo electrónico</label>
+                    <input class="form-control" value="@Model.Email" disabled />
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label asp-for="NombreCompleto" class="form-label"></label>
+                        <input asp-for="NombreCompleto" class="form-control" />
+                        <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Rut" class="form-label"></label>
+                        <input asp-for="Rut" class="form-control" placeholder="12345678-9" />
+                        <span asp-validation-for="Rut" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Telefono" class="form-label"></label>
+                        <input asp-for="Telefono" class="form-control" />
+                        <span asp-validation-for="Telefono" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="Direccion" class="form-label"></label>
+                        <input asp-for="Direccion" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Comuna" class="form-label"></label>
+                        <input asp-for="Comuna" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="AceptaComunicaciones" id="AceptaComunicaciones" value="true" checked="@Model.AceptaComunicaciones" />
+                            <label class="form-check-label" for="AceptaComunicaciones">Quiero recibir ofertas y novedades por correo</label>
+                        </div>
+                        <div class="form-text">
+                            Puedes retirar este consentimiento cuando quieras. Para pedir una copia de tus datos o eliminar tu cuenta,
+                            <a asp-controller="Contacto" asp-action="Index">escríbenos</a> (<a asp-controller="Info" asp-action="Privacidad" asp-fragment="derechos">tus derechos</a>).
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-naranja mt-4">Guardar cambios</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

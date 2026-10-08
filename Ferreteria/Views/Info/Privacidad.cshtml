@@ -1,0 +1,121 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<OpcionesTienda> Opciones
+@{
+    ViewData["Title"] = "Política de Privacidad";
+    ViewData["Descripcion"] = "Cómo El Maestro Online trata tus datos personales conforme a la Ley 19.628 y la Ley 21.719 de Protección de Datos Personales.";
+    var t = Opciones.Value;
+}
+
+<div class="container my-4">
+    <header class="cabecera-info mb-4" data-anim="subir">
+        <span class="chip-suave mb-2">🔒 Tus datos</span>
+        <h1 class="h2 fw-bold mb-1">Política de Privacidad y Protección de Datos</h1>
+        <p class="mb-0">Te explicamos qué datos usamos, para qué, por cuánto tiempo y cómo ejercer tus derechos. Sin letra chica.</p>
+    </header>
+
+    <div class="row g-4">
+        <aside class="col-lg-3 d-none d-lg-block">
+            <nav class="indice-legal" aria-label="Índice">
+                <strong class="small text-uppercase text-muted d-block mb-2">Contenido</strong>
+                <a href="#marco">1. Marco legal</a>
+                <a href="#datos">2. Datos que recopilamos</a>
+                <a href="#finalidad">3. Para qué los usamos</a>
+                <a href="#recomendaciones">4. Recomendaciones personalizadas</a>
+                <a href="#terceros">5. Con quién los compartimos</a>
+                <a href="#seguridad">6. Seguridad</a>
+                <a href="#conservacion">7. Conservación</a>
+                <a href="#derechos">8. Tus derechos</a>
+                <a href="#cookies">9. Cookies</a>
+                <a href="#encuesta">10. Encuesta de opinión</a>
+            </nav>
+        </aside>
+        <article class="col-lg-9">
+            <div class="texto-legal" data-anim="subir">
+                <h2 id="marco">1. Marco legal</h2>
+                <p>
+                    Tratamos tus datos conforme al <span class="ley">art. 19 N°4 de la Constitución</span> (derecho a la protección de datos personales, Ley 21.096),
+                    la <span class="ley">Ley 19.628 sobre Protección de la Vida Privada</span> y la <span class="ley">Ley 21.719</span>, que moderniza la protección de datos personales
+                    y crea la Agencia de Protección de Datos Personales (entra en plena vigencia el 1 de diciembre de 2026). Aplicamos desde ya sus principios de
+                    <strong>licitud, finalidad, proporcionalidad, calidad, seguridad, transparencia y confidencialidad</strong>.
+                </p>
+                <p>Responsable del tratamiento: El Maestro Online SpA (ficticia) · <a href="mailto:@t.Email">@t.Email</a> · @t.Direccion.</p>
+
+                <h2 id="datos">2. Datos que recopilamos (solo los necesarios)</h2>
+                <ul>
+                    <li><strong>Cuenta:</strong> nombre, correo, contraseña (cifrada), y de forma opcional RUT y teléfono.</li>
+                    <li><strong>Compras:</strong> dirección, comuna, región y teléfono de entrega; productos comprados; comprobante de pago de Transbank (código de autorización y 4 últimos dígitos).</li>
+                    <li><strong>Contacto:</strong> lo que nos escribes en el formulario o en el chatbot.</li>
+                    <li><strong>Navegación:</strong> los productos que viste durante tu visita (se guardan en la sesión y se borran al cerrarla).</li>
+                </ul>
+                <p><strong>No</strong> recopilamos datos sensibles ni guardamos los datos de tu tarjeta.</p>
+
+                <h2 id="finalidad">3. Para qué los usamos</h2>
+                <ul>
+                    <li>Procesar, despachar y hacer seguimiento de tus pedidos (base: ejecución del contrato).</li>
+                    <li>Responder tus consultas y reclamos (base: tu solicitud).</li>
+                    <li>Enviarte ofertas por correo <strong>solo si lo autorizas</strong> con la casilla opcional de registro; puedes retirar ese consentimiento en "Mis datos".</li>
+                    <li>Cumplir obligaciones legales y tributarias.</li>
+                </ul>
+
+                <h2 id="recomendaciones">4. Recomendaciones personalizadas</h2>
+                <p>
+                    Te sugerimos productos según lo que viste en esta visita, tus compras anteriores y lo que otros clientes compraron en conjunto (datos agregados, sin identificar a nadie).
+                    Cada recomendación muestra <strong>por qué</strong> te la sugerimos. No tomamos decisiones automatizadas que produzcan efectos jurídicos sobre ti.
+                </p>
+
+                <h2 id="terceros">5. Con quién los compartimos</h2>
+                <p>
+                    Solo con quienes necesitamos para cumplir tu compra: <strong>Transbank</strong> (procesa el pago) y la <strong>empresa de transporte</strong> (recibe nombre, dirección y teléfono de entrega).
+                    No vendemos ni cedemos tus datos a terceros con fines comerciales.
+                </p>
+
+                <h2 id="seguridad">6. Seguridad</h2>
+                <p>
+                    Conexión cifrada (HTTPS), contraseñas almacenadas con hash, bloqueo de cuenta ante intentos fallidos, protección contra falsificación de formularios (CSRF)
+                    y acceso al panel de administración restringido por rol.
+                </p>
+
+                <h2 id="conservacion">7. Conservación</h2>
+                <p>
+                    Los datos de tus pedidos se conservan el tiempo que exige la ley tributaria (6 años). Los mensajes de contacto, 2 años. Las respuestas de la encuesta son anónimas.
+                    Si eliminas tu cuenta, borramos tus datos personales salvo los que debamos conservar por ley.
+                </p>
+
+                <h2 id="derechos">8. Tus derechos</h2>
+                <p>Puedes ejercer en cualquier momento y de forma gratuita tus derechos de:</p>
+                <div class="row g-2 mb-3">
+                    @foreach (var (d, desc) in new[] { ("Acceso", "saber qué datos tenemos"), ("Rectificación", "corregir datos erróneos"), ("Supresión", "pedir que los borremos"),
+                                                       ("Oposición", "negarte a un uso, como las ofertas"), ("Portabilidad", "recibirlos en formato electrónico"), ("Bloqueo", "suspender temporalmente su uso") })
+                    {
+                        <div class="col-sm-6 col-md-4"><div class="dato-envio h-100"><span>@d</span>@desc</div></div>
+                    }
+                </div>
+                <p>
+                    Escríbenos desde el <a asp-controller="Contacto" asp-action="Index">formulario de contacto</a> o a <a href="mailto:@t.Email">@t.Email</a>. Respondemos en un máximo de 15 días hábiles.
+                    También puedes recurrir a la Agencia de Protección de Datos Personales.
+                </p>
+
+                <h2 id="cookies">9. Cookies</h2>
+                <p>Usamos solo cookies <strong>técnicas</strong>, necesarias para que el sitio funcione. No usamos cookies publicitarias ni de rastreo de terceros:</p>
+                <div class="table-responsive">
+                    <table class="table table-sm small">
+                        <thead><tr><th>Cookie</th><th>Para qué sirve</th><th>Duración</th></tr></thead>
+                        <tbody>
+                            <tr><td>.Ferreteria.Carrito</td><td>Guarda tu carrito y los productos vistos en esta visita</td><td>2 horas sin actividad</td></tr>
+                            <tr><td>.AspNetCore.Identity.Application</td><td>Mantiene tu sesión iniciada</td><td>Hasta 7 días</td></tr>
+                            <tr><td>.AspNetCore.Antiforgery</td><td>Protege los formularios contra ataques (CSRF)</td><td>Sesión</td></tr>
+                            <tr><td>EncuestaRespondida</td><td>Evita que respondas la encuesta dos veces (no te identifica)</td><td>60 días</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>El aviso de cookies que ves al entrar se recuerda en tu navegador (almacenamiento local) para no volver a mostrártelo.</p>
+
+                <h2 id="encuesta">10. Encuesta de opinión</h2>
+                <p>
+                    La <a asp-controller="Encuesta" asp-action="Index">encuesta de experiencia</a> es voluntaria y <strong>anónima</strong>: no pide nombre, correo ni RUT.
+                    Sus resultados se usan de forma agregada para mejorar el sitio y en el informe académico del proyecto.
+                </p>
+            </div>
+        </article>
+    </div>
+</div>
