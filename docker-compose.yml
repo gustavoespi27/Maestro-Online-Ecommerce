@@ -37,8 +37,11 @@ services:
       Seguridad__DirectorioLlaves: /llaves
     volumes:
       - llaves:/llaves
+      # Imágenes de productos subidas desde el panel admin
+      - imagenes:/app/wwwroot/uploads
     restart: unless-stopped
 
 volumes:
   datos-sql:
   llaves:
+  imagenes:
