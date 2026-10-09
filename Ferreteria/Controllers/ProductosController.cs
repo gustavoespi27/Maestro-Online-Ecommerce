@@ -36,6 +36,7 @@ public class ProductosController : Controller
         if (!string.IsNullOrWhiteSpace(q))
         {
             var texto = q.Trim();
+            if (texto.Length > 100) texto = texto[..100]; // búsquedas acotadas
             consulta = consulta.Where(p =>
                 p.Nombre.Contains(texto) ||
                 (p.Marca != null && p.Marca.Contains(texto)) ||

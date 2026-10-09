@@ -13,6 +13,7 @@
         <span class="small text-muted">🔒 Pago seguro con Webpay · Tus datos se usan solo para tu pedido</span>
     </div>
     <form asp-action="Index" method="post" id="formCheckout">
+        <partial name="_AntiBot" />
         <div class="row g-4">
             <div class="col-lg-7">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>

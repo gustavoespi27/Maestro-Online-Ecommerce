@@ -50,7 +50,7 @@ public class CuentaController : Controller
     [HttpGet]
     public IActionResult Registro(string? returnUrl = null) => View(new RegistroVM { ReturnUrl = returnUrl });
 
-    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaLogin)]
+    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaLogin), ValidarHumano]
     public async Task<IActionResult> Registro(RegistroVM vm)
     {
         if (!ModelState.IsValid) return View(vm);
@@ -69,8 +69,8 @@ public class CuentaController : Controller
         var resultado = await _userManager.CreateAsync(usuario, vm.Password);
         if (!resultado.Succeeded)
         {
-            foreach (var error in resultado.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
+            foreach (var descripcion in resultado.Errors.Select(e => e.Description).Distinct())
+                ModelState.AddModelError(string.Empty, descripcion);
             return View(vm);
         }
 

@@ -1,0 +1,7 @@
+@inject Ferreteria.Services.ProteccionBots Bots
+@* Protección anti-bots: campo trampa invisible + marca de tiempo firmada (ver Services/ProteccionBots.cs) *@
+<div class="campo-trampa" aria-hidden="true">
+    <label for="@Ferreteria.Services.ProteccionBots.CampoTrampa">No completar este campo</label>
+    <input id="@Ferreteria.Services.ProteccionBots.CampoTrampa" name="@Ferreteria.Services.ProteccionBots.CampoTrampa" tabindex="-1" autocomplete="off" />
+</div>
+<input type="hidden" name="@Ferreteria.Services.ProteccionBots.CampoMarca" value="@Bots.GenerarMarca()" />

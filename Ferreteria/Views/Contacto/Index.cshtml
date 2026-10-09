@@ -41,10 +41,7 @@
                 <h2 class="h5 fw-bold mb-3">Envíanos un mensaje</h2>
                 <form asp-action="Index" method="post" novalidate>
                     <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
-                    <div class="campo-trampa" aria-hidden="true">
-                        <label for="sitioWeb">No llenar</label>
-                        <input id="sitioWeb" name="sitioWeb" tabindex="-1" autocomplete="off" />
-                    </div>
+                    <partial name="_AntiBot" />
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label asp-for="Nombre" class="form-label"></label>

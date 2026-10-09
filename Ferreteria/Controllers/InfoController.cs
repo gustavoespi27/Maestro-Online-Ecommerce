@@ -28,7 +28,7 @@ public class InfoController : Controller
     {
         ViewBag.Codigo = codigo;
         ViewBag.Email = email;
-        if (string.IsNullOrWhiteSpace(codigo) || string.IsNullOrWhiteSpace(email)) return View(null);
+        if (string.IsNullOrWhiteSpace(codigo) || string.IsNullOrWhiteSpace(email) || codigo.Length > 40 || email.Length > 120) return View(null);
 
         var c = codigo.Trim().ToUpperInvariant();
         var e = email.Trim().ToLowerInvariant();

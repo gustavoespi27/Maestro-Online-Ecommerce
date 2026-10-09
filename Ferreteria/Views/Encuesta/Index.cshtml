@@ -35,6 +35,7 @@
     }
 
     <form method="post" asp-action="Index" id="formEncuesta">
+        <partial name="_AntiBot" />
         <div class="progreso-encuesta">
             <div class="d-flex justify-content-between small fw-semibold mb-1"><span>Tu avance</span><span id="textoAvance">0 de @totalItems</span></div>
             <div class="progreso-despacho"><div id="barraAvance" style="width:0%"></div></div>

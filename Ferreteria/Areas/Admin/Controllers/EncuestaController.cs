@@ -1,3 +1,4 @@
+using Ferreteria.Services;
 using System.Globalization;
 using System.Text;
 using Ferreteria.Data;
@@ -29,7 +30,7 @@ public class EncuestaController : Controller
         var respuestas = await _db.RespuestasEncuesta.OrderBy(r => r.Fecha).ToListAsync();
         var items = EncuestaUtaut.Constructos.SelectMany(c => c.Items).ToList();
         var cl = CultureInfo.GetCultureInfo("es-CL");
-        string Celda(string? v) => "\"" + (v ?? "").Replace("\"", "\"\"") + "\"";
+        string Celda(string? v) => Texto.CeldaCsv(v); // evita que Excel ejecute fórmulas escritas por encuestados
 
         var sb = new StringBuilder();
         sb.AppendLine(string.Join(";", new[] { "N", "Fecha", "Edad", "Genero", "Frecuencia compra online", "Perfil" }

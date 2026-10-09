@@ -1,0 +1,28 @@
+# Dependabot revisa cada semana si hay versiones nuevas o vulnerables de las dependencias
+# y abre automáticamente un pull request con la actualización.
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/Ferreteria"
+    schedule:
+      interval: "weekly"
+    # Solo parches y versiones menores de .NET 8 (un salto de versión mayor se hace a mano)
+    ignore:
+      - dependency-name: "Microsoft.*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencias"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels: ["dependencias"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencias"]

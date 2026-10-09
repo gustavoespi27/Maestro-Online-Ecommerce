@@ -6,10 +6,14 @@ namespace Ferreteria.Services;
 public class IdentityErrorDescriberEs : IdentityErrorDescriber
 {
     public override IdentityError DuplicateEmail(string email) =>
-        new() { Code = nameof(DuplicateEmail), Description = $"El correo '{email}' ya está registrado." };
+        new() { Code = nameof(DuplicateEmail), Description = MensajeCuentaNoDisponible };
 
     public override IdentityError DuplicateUserName(string userName) =>
-        new() { Code = nameof(DuplicateUserName), Description = $"El usuario '{userName}' ya existe." };
+        new() { Code = nameof(DuplicateUserName), Description = MensajeCuentaNoDisponible };
+
+    /// <summary>Mensaje genérico: no confirma ni niega que el correo ya tenga cuenta (evita enumerar usuarios).</summary>
+    public const string MensajeCuentaNoDisponible =
+        "No pudimos crear la cuenta con ese correo. Si ya tienes una, ingresa con tu contraseña o escríbenos desde Contacto.";
 
     public override IdentityError InvalidEmail(string? email) =>
         new() { Code = nameof(InvalidEmail), Description = $"El correo '{email}' no es válido." };

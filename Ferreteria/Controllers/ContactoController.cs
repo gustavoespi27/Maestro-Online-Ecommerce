@@ -32,7 +32,7 @@ public class ContactoController : Controller
         return View(mensaje);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaFormularios)]
+    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaFormularios), ValidarHumano]
     public async Task<IActionResult> Index(MensajeContacto datos, bool aceptaPrivacidad, string? sitioWeb)
     {
         // Campo trampa invisible: los bots lo llenan, las personas no (anti-spam sin captcha)
@@ -45,8 +45,11 @@ public class ContactoController : Controller
         datos.Id = 0;
         datos.Fecha = DateTime.Now;
         datos.Atendido = false;
-        datos.Nombre = datos.Nombre.Trim();
+        datos.Nombre = Texto.Limpiar(datos.Nombre, 100) ?? "";
         datos.Email = datos.Email.Trim();
+        datos.Mensaje = Texto.Limpiar(datos.Mensaje, 2000) ?? "";
+        datos.Telefono = Texto.Limpiar(datos.Telefono, 20);
+        datos.OrdenCompra = Texto.Limpiar(datos.OrdenCompra, 26);
         _db.MensajesContacto.Add(datos);
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Gracias), new { id = datos.Id });

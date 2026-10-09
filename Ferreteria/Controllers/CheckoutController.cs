@@ -45,7 +45,7 @@ public class CheckoutController : Controller
         return View(vm);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaPagos)]
+    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaPagos), ValidarHumano]
     public async Task<IActionResult> Index(CheckoutVM vm)
     {
         var u = User.Identity?.IsAuthenticated == true ? await _userManager.GetUserAsync(User) : null;

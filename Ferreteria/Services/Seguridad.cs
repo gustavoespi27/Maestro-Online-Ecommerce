@@ -43,6 +43,15 @@ public static class Seguridad
             Ventana(o, PoliticaPagos, 120, TimeSpan.FromMinutes(5));     // páginas de pago (incluye recargas y reintentos)
             Ventana(o, PoliticaEncuesta, 40, TimeSpan.FromHours(1));      // permite aplicar la encuesta en un mismo equipo
             Ventana(o, PoliticaConsultas, 20, TimeSpan.FromMinutes(5));    // seguimiento de pedidos (evita adivinar códigos)
+            // Límite global: 300 solicitudes por minuto por IP en todo el sitio (frena scraping y abuso).
+            // Los archivos estáticos (CSS, JS, imágenes) se sirven antes y no cuentan.
+            o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(c =>
+                RateLimitPartition.GetFixedWindowLimiter(Ip(c), _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 300,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
+                }));
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             o.OnRejected = async (ctx, token) =>
             {
@@ -65,6 +74,8 @@ public static class Seguridad
                 h["Referrer-Policy"] = "strict-origin-when-cross-origin";
                 h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
                 h["Cross-Origin-Opener-Policy"] = "same-origin";
+                h["X-Permitted-Cross-Domain-Policies"] = "none";
+                h["Cross-Origin-Resource-Policy"] = "same-site";
                 h["Content-Security-Policy"] =
                     "default-src 'self'; " +
                     $"script-src 'self' 'nonce-{nonce}'; " +
@@ -83,4 +94,38 @@ public static class Seguridad
             });
             await siguiente();
         });
+}
+
+/// <summary>Limpieza de textos libres escritos por usuarios (reseñas, mensajes, comentarios).</summary>
+public static class Texto
+{
+    /// <summary>
+    /// Quita caracteres de control e invisibles (salvo saltos de línea), normaliza Unicode, colapsa saltos
+    /// repetidos y recorta al largo máximo. La salida HTML además siempre se codifica con Razor.
+    /// </summary>
+    public static string? Limpiar(string? texto, int largoMaximo)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return null;
+        var normalizado = texto.Normalize(System.Text.NormalizationForm.FormC).Replace("\r\n", "\n");
+        var sb = new System.Text.StringBuilder(normalizado.Length);
+        foreach (var c in normalizado)
+        {
+            var categoria = char.GetUnicodeCategory(c);
+            if (c == '\n' || (!char.IsControl(c) && categoria != System.Globalization.UnicodeCategory.Format)) sb.Append(c);
+        }
+        var limpio = System.Text.RegularExpressions.Regex.Replace(sb.ToString(), "\n{3,}", "\n\n").Trim();
+        if (limpio.Length == 0) return null;
+        return limpio.Length > largoMaximo ? limpio[..largoMaximo] : limpio;
+    }
+
+    /// <summary>
+    /// Evita la inyección de fórmulas al abrir un CSV en Excel: un texto que empieza con = + - @ (o tab/retorno)
+    /// podría ejecutarse como fórmula; se le antepone un apóstrofo para que se muestre como texto.
+    /// </summary>
+    public static string CeldaCsv(string? valor)
+    {
+        var v = valor ?? "";
+        if (v.Length > 0 && "=+-@\t\r".Contains(v[0])) v = "'" + v;
+        return "\"" + v.Replace("\"", "\"\"") + "\"";
+    }
 }

@@ -1,0 +1,41 @@
+# Compila el proyecto y escanea dependencias y secretos en cada push, pull request y una vez por semana.
+name: Compilación y seguridad
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 12 * * 1"   # lunes 12:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  compilar-y-escanear:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo para buscar secretos en todos los commits
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restaurar y compilar (advertencias = error)
+        run: |
+          dotnet restore Ferreteria/Ferreteria.csproj
+          dotnet build Ferreteria/Ferreteria.csproj -c Release --no-restore -warnaserror
+
+      - name: Escanear paquetes NuGet vulnerables (incluye dependencias indirectas)
+        run: |
+          dotnet list Ferreteria/Ferreteria.csproj package --vulnerable --include-transitive 2>&1 | tee vulnerables.txt
+          if grep -q -i "has the following vulnerable packages" vulnerables.txt; then
+            echo "::error::Hay paquetes con vulnerabilidades conocidas"; exit 1
+          fi
+
+      - name: Buscar secretos en el historial de Git
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

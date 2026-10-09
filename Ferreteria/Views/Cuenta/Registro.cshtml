@@ -13,6 +13,7 @@
         <div class="card-body p-4">
             <form asp-action="Registro" method="post">
                 <input type="hidden" asp-for="ReturnUrl" />
+                <partial name="_AntiBot" />
                 <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
                 <div class="row g-3">
                     <div class="col-12">
