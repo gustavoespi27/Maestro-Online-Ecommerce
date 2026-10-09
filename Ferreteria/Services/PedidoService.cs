@@ -99,7 +99,7 @@ public class PedidoService
             Fecha = DateTime.Now,
             Estado = EstadoPedido.PendientePago,
             TipoEntrega = datos.TipoEntrega,
-            NombreReceptor = datos.NombreReceptor.Trim(),
+            NombreReceptor = Texto.Limpiar(datos.NombreReceptor, 100) ?? "",
             Telefono = datos.Telefono.Trim(),
             Direccion = datos.TipoEntrega == TipoEntrega.Despacho ? datos.Direccion?.Trim() : null,
             Comuna = datos.TipoEntrega == TipoEntrega.Despacho ? datos.Comuna?.Trim() : null,
@@ -107,7 +107,7 @@ public class PedidoService
             FechaEstimadaEntrega = datos.TipoEntrega == TipoEntrega.Despacho
                 ? Envios.RangoEntrega(datos.Region, DateTime.Now).Hasta
                 : Envios.SumarDiasHabiles(DateTime.Now, Envios.DiasPreparacionRetiro),
-            Notas = datos.Notas?.Trim(),
+            Notas = Texto.Limpiar(datos.Notas, 300),
             Subtotal = carrito.Subtotal,
             CostoDespacho = carrito.CostoDespacho,
             Total = carrito.Total,

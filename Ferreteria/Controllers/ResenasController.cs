@@ -52,7 +52,7 @@ public class ResenasController : Controller
                 _db.Resenas.Add(resena);
             }
             resena.Calificacion = calificacion;
-            resena.Comentario = string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim()[..Math.Min(comentario.Trim().Length, 600)];
+            resena.Comentario = Texto.Limpiar(comentario, 600);
             resena.Fecha = DateTime.Now;
             await _db.SaveChangesAsync();
             TempData["Exito"] = "¡Gracias por tu opinión, maestro!";

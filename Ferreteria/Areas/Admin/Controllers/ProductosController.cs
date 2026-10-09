@@ -57,14 +57,28 @@ public class ProductosController : Controller
             return View("Formulario", vm);
         }
 
-        if (vm.Imagen is not null)
-            vm.Producto.ImagenUrl = await GuardarImagenAsync(vm.Imagen);
-
-        vm.Producto.FechaCreacion = DateTime.Now;
-        _db.Productos.Add(vm.Producto);
+        // Se copian solo los campos editables: el Id, la fecha y la URL de la imagen nunca vienen del formulario
+        var f = vm.Producto;
+        var producto = new Producto
+        {
+            Sku = f.Sku.Trim(),
+            Nombre = f.Nombre.Trim(),
+            Marca = f.Marca?.Trim(),
+            Descripcion = f.Descripcion?.Trim(),
+            Precio = f.Precio,
+            PrecioAnterior = f.PrecioAnterior,
+            Stock = f.Stock,
+            StockMinimo = f.StockMinimo,
+            CategoriaId = f.CategoriaId,
+            Destacado = f.Destacado,
+            Activo = f.Activo,
+            FechaCreacion = DateTime.Now,
+            ImagenUrl = vm.Imagen is not null ? await GuardarImagenAsync(vm.Imagen) : null
+        };
+        _db.Productos.Add(producto);
         await _db.SaveChangesAsync();
 
-        TempData["Exito"] = $"Producto \"{vm.Producto.Nombre}\" creado.";
+        TempData["Exito"] = $"Producto \"{producto.Nombre}\" creado.";
         return RedirectToAction(nameof(Index));
     }
 

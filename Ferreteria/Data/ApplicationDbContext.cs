@@ -1,4 +1,6 @@
 using Ferreteria.Models;
+using Ferreteria.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +8,12 @@ namespace Ferreteria.Data;
 
 public class ApplicationDbContext : IdentityDbContext<Usuario>
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+    private readonly IDataProtector? _protector;
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDataProtectionProvider? proteccion = null) : base(options)
+    {
+        _protector = proteccion?.CreateProtector(CifradoDatos.Proposito);
+    }
 
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<Producto> Productos => Set<Producto>();
@@ -19,6 +26,24 @@ public class ApplicationDbContext : IdentityDbContext<Usuario>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder); // necesario para las tablas de Identity
+
+        // ---- Datos personales cifrados en reposo (RUT, teléfonos, direcciones) ----
+        if (_protector is not null)
+        {
+            var cifrado = CifradoDatos.Convertidor(_protector);
+            builder.Entity<Usuario>(e =>
+            {
+                e.Property(u => u.Rut).HasConversion(cifrado).HasMaxLength(CifradoDatos.LargoColumna);
+                e.Property(u => u.Direccion).HasConversion(cifrado).HasMaxLength(CifradoDatos.LargoColumna);
+                e.Property(u => u.PhoneNumber).HasConversion(cifrado);
+            });
+            builder.Entity<Pedido>(e =>
+            {
+                e.Property(p => p.Telefono).HasConversion(cifrado).HasMaxLength(CifradoDatos.LargoColumna);
+                e.Property(p => p.Direccion).HasConversion(cifrado).HasMaxLength(CifradoDatos.LargoColumna);
+            });
+            builder.Entity<MensajeContacto>().Property(m => m.Telefono).HasConversion(cifrado).HasMaxLength(CifradoDatos.LargoColumna);
+        }
 
         builder.Entity<Categoria>(e =>
         {

@@ -56,6 +56,7 @@ public class CarritoVM
 
 public class CheckoutVM
 {
+    [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever] // el carrito se lee de la sesión, nunca del formulario
     public CarritoVM Carrito { get; set; } = new();
 
     [Display(Name = "Tipo de entrega")]
@@ -67,6 +68,7 @@ public class CheckoutVM
     [Display(Name = "Correo electrónico")]
     public string? EmailInvitado { get; set; }
 
+    [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
     public bool EsInvitado { get; set; }
 
     [Required(ErrorMessage = "Ingresa el nombre de quien recibe")]
@@ -100,6 +102,7 @@ public class CheckoutVM
     [Display(Name = "Acepto los Términos y Condiciones y la Política de Privacidad")]
     public bool AceptaTerminos { get; set; }
 
+    [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
     public int CostoDespachoConfigurado { get; set; }
 }
 
@@ -136,7 +139,7 @@ public class RegistroVM
     public string Email { get; set; } = "";
 
     [StringLength(12)]
-    [RegularExpression(@"^\d{7,8}-[\dkK]$", ErrorMessage = "Formato de RUT: 12345678-9")]
+    [RutChileno]
     [Display(Name = "RUT (opcional)")]
     public string? Rut { get; set; }
 
@@ -174,7 +177,7 @@ public class PerfilVM
     public string NombreCompleto { get; set; } = "";
 
     [StringLength(12)]
-    [RegularExpression(@"^\d{7,8}-[\dkK]$", ErrorMessage = "Formato de RUT: 12345678-9")]
+    [RutChileno]
     [Display(Name = "RUT")]
     public string? Rut { get; set; }
 

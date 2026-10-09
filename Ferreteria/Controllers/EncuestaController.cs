@@ -21,7 +21,7 @@ public class EncuestaController : Controller
         return View();
     }
 
-    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaEncuesta)]
+    [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting(Seguridad.PoliticaEncuesta), ValidarHumano]
     public async Task<IActionResult> Index(IFormCollection form)
     {
         string? Opcion(string campo, string[] validas) =>
@@ -34,7 +34,7 @@ public class EncuestaController : Controller
             Genero = Opcion("Genero", EncuestaUtaut.Generos),
             FrecuenciaCompraOnline = Opcion("FrecuenciaCompraOnline", EncuestaUtaut.Frecuencias),
             Perfil = Opcion("Perfil", EncuestaUtaut.Perfiles),
-            Comentario = form["Comentario"].ToString() is { Length: > 0 } c ? c[..Math.Min(c.Length, 500)] : null
+            Comentario = Texto.Limpiar(form["Comentario"].ToString(), 500)
         };
 
         var faltantes = new List<string>();
@@ -46,10 +46,13 @@ public class EncuestaController : Controller
                 faltantes.Add(item.Codigo);
         }
         if (r.RangoEdad is null || r.FrecuenciaCompraOnline is null || r.Perfil is null) faltantes.Add("datos");
+        if (!ModelState.IsValid) faltantes.Add("verificacion"); // envío automatizado (protección anti-bots)
 
         if (faltantes.Count > 0)
         {
-            ViewBag.Error = "Responde todas las preguntas para poder registrar tu opinión.";
+            ViewBag.Error = faltantes.Contains("verificacion")
+                ? "No pudimos verificar el envío. Espera unos segundos e inténtalo de nuevo."
+                : "Responde todas las preguntas para poder registrar tu opinión.";
             ViewBag.Faltantes = faltantes;
             ViewBag.Form = form;
             ViewBag.YaRespondio = false;

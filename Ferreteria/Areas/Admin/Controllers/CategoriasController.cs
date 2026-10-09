@@ -33,9 +33,11 @@ public class CategoriasController : Controller
         await ValidarNombreAsync(categoria);
         if (!ModelState.IsValid) return View("Formulario", categoria);
 
-        _db.Categorias.Add(categoria);
+        // Solo los campos editables (el Id y los productos asociados nunca vienen del formulario)
+        var nueva = new Categoria { Nombre = categoria.Nombre.Trim(), Descripcion = categoria.Descripcion?.Trim(), Icono = categoria.Icono };
+        _db.Categorias.Add(nueva);
         await _db.SaveChangesAsync();
-        TempData["Exito"] = $"Categoría \"{categoria.Nombre}\" creada.";
+        TempData["Exito"] = $"Categoría \"{nueva.Nombre}\" creada.";
         return RedirectToAction(nameof(Index));
     }
 

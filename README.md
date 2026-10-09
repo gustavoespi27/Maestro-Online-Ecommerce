@@ -128,6 +128,8 @@ La primera vez la aplicación crea sola la base de datos, los roles, el administ
 | `Pagos:WebpayUrlBase` | `https://webpay3gint.transbank.cl` (pruebas) o `https://webpay3g.transbank.cl` (producción) | Pruebas |
 | `Pagos:CodigoComercio` / `Pagos:ApiKeySecret` | Credenciales de Transbank | *(vacío)* |
 | `Tienda:*` | Nombre, correo, WhatsApp, dirección, costo de despacho, monto para despacho gratis | Datos ficticios |
+| `Seguridad:DirectorioLlaves` | Carpeta persistente para las llaves de cifrado (servidores y Docker) | Perfil del usuario |
+| `Seguridad:DetrasDeProxy` / `Seguridad:ProxiesConfiables` | Activar solo si la app está detrás de un proxy inverso con HTTPS | `false` |
 
 El archivo `.env` (Docker) también está en `.gitignore`. Para empezar, copia `.env.example`.
 
@@ -205,19 +207,30 @@ Reconoce intenciones por palabras clave (despacho, pagos, devoluciones, seguimie
 
 ## 7. Seguridad
 
-| Riesgo | Protección |
-|---|---|
-| Contraseñas débiles o fuerza bruta | Mínimo 8 caracteres con mayúscula, minúscula y número (hash PBKDF2), bloqueo de 15 min tras 5 intentos fallidos y límite de intentos por IP |
-| Manipular el pago | Monto desde la base de datos, confirmación servidor a servidor, validación de monto y orden, consulta de estado ante fallas |
-| Ver pedidos ajenos | Solo el dueño o el admin; las compras de invitado usan un token aleatorio de 256 bits comparado en tiempo constante |
-| Anulaciones falsas | Exigen el token de la transacción o el `session_id` secreto del pedido |
-| CSRF | Token antiforgery obligatorio en todos los POST (filtro global), cookies `HttpOnly` y `SameSite` |
-| XSS y clickjacking | Codificación de Razor, `Content-Security-Policy` con nonce, sin JavaScript en línea, `X-Frame-Options: DENY`, `nosniff` |
-| Archivos maliciosos | Las imágenes subidas se validan por extensión, tamaño y firma binaria |
-| Spam y abuso | Límite de solicitudes por IP en login, formularios, chatbot, encuesta y pago; campo trampa anti-bots en contacto |
-| Configuración insegura | Sin secretos en el repositorio; el pago simulado y la falta de contraseña de admin impiden arrancar fuera de desarrollo |
+| # | Medida | Cómo se aplica |
+|---|---|---|
+| 1 | Ocultar API keys | Las llaves de Transbank y la clave del admin solo se leen de secretos de usuario o variables de entorno; nunca llegan al navegador. |
+| 2 | Secretos fuera de Git | El historial no contiene secretos; `.env` y archivos locales están en `.gitignore`, y GitHub Actions escanea el historial con **gitleaks** en cada push. |
+| 5 | Datos sensibles cifrados | RUT, teléfonos y direcciones se guardan cifrados en la base (ASP.NET Core Data Protection, AES-256 + HMAC). Una copia robada de la base no los revela. |
+| 6 | Autenticación forzada | Todo el panel `/Admin` exige el rol Admin mediante una convención global (aunque un controlador olvide `[Authorize]`); "Mis pedidos", reseñas y perfil exigen sesión. |
+| 7 | Acceso a registros | Cada pedido solo lo ve su dueño o el admin; las compras de invitado usan un token aleatorio de 256 bits comparado en tiempo constante. |
+| 8 | Manipulación de campos | Los formularios no pueden fijar Id, fechas, imágenes, montos ni el carrito (`[BindNever]` y copia explícita de campos permitidos). |
+| 9 | Cookies de sesión | `HttpOnly`, `SameSite`, `Secure` y prefijo `__Host-` en producción; la sesión se invalida si cambia la contraseña o el rol. |
+| 10 | Contraseñas | Hash PBKDF2-HMAC-SHA512 con sal y 100.000 iteraciones (Identity v3); mínimo 8 caracteres con mayúscula, minúscula y número; bloqueo de 15 min tras 5 intentos. |
+| 11 | Rate limiting | Límite global de 300 solicitudes/min por IP y límites específicos para login, registro, formularios, chatbot, pago, encuesta y seguimiento. |
+| 12 | Bots | Campo trampa invisible + marca de tiempo firmada en registro, checkout, contacto y encuesta; los pedidos sin pagar se anulan a los 60 min para que nadie bloquee el stock. |
+| 13 | Consultas parametrizadas | Todo el acceso a datos usa Entity Framework (consultas parametrizadas); no hay SQL armado con datos del usuario. |
+| 14 | Validación de entradas | Anotaciones en todos los formularios, RUT con dígito verificador, listas blancas para opciones, largos máximos y límite de tamaño de las solicitudes. |
+| 15 | Sanitización | Razor codifica toda salida HTML; los textos libres se limpian de caracteres de control; el CSV exportado neutraliza fórmulas de Excel. |
+| 16 | Archivos | Imágenes subidas: solo JPG/PNG/WEBP/GIF, máx. 2 MB, firma binaria verificada y nombre aleatorio. |
+| 17 | Solo datos necesarios | El chatbot y el seguimiento devuelven lo justo; las reseñas muestran nombre e inicial; el registro no revela si un correo ya existe; los errores no muestran detalles internos. |
+| 18 | Security headers | CSP con nonce, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP, CORP y HSTS. |
+| 19 | HTTPS | Redirección 308 a HTTPS y HSTS (1 año) en producción; soporte opcional para proxy inverso (`Seguridad:DetrasDeProxy`). |
+| 20 | Dependencias | Paquetes al día y sin vulnerabilidades conocidas; **Dependabot** propone actualizaciones y el workflow falla si aparece un paquete vulnerable. |
 
----
+Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corresponden a arquitecturas donde el navegador consulta la base directamente (por ejemplo Supabase o Firebase). Aquí el navegador **nunca** se conecta a SQL Server: todo pasa por el servidor, que aplica los permisos de cada registro (punto 7).
+
+> **Importante sobre el cifrado:** las llaves se guardan en tu perfil de usuario (Windows) o en la carpeta indicada en `Seguridad:DirectorioLlaves` (Docker usa un volumen). Si copias la base de datos a otro equipo sin sus llaves, los datos cifrados se mostrarán como "[dato cifrado no disponible]".
 
 ## 8. Estructura del proyecto
 

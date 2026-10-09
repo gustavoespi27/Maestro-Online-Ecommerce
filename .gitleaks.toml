@@ -1,0 +1,12 @@
+# Configuración del escáner de secretos (gitleaks). Usa las reglas por defecto y excluye
+# solo los archivos con contraseñas de EJEMPLO que no son reales.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valores de ejemplo de la documentación"
+paths = [
+  '''README\.md''',
+  '''\.env\.example''',
+  '''Ferreteria/wwwroot/lib/''',
+]

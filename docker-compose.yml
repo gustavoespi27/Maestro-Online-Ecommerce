@@ -33,7 +33,12 @@ services:
       Pagos__Modo: ${PAGOS_MODO:-Simulado}
       Pagos__CodigoComercio: ${WEBPAY_CODIGO_COMERCIO:-}
       Pagos__ApiKeySecret: ${WEBPAY_API_KEY_SECRET:-}
+      # Llaves de cifrado de cookies y datos personales: si se pierden, los datos cifrados no se pueden leer
+      Seguridad__DirectorioLlaves: /llaves
+    volumes:
+      - llaves:/llaves
     restart: unless-stopped
 
 volumes:
   datos-sql:
+  llaves:

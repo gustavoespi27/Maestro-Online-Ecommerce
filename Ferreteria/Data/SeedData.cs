@@ -48,6 +48,49 @@ public static class SeedData
         await CrearCatalogoAsync(db);
         await ActualizarCatalogoEjemploAsync(db, services.GetRequiredService<IWebHostEnvironment>());
         await CrearResenasEjemploAsync(db);
+        await CifrarDatosExistentesAsync(db);
+    }
+
+    /// <summary>
+    /// Cifra los datos personales que quedaron guardados en texto plano antes de activar el cifrado.
+    /// Se buscan con SQL directo (sin pasar por el convertidor) y se vuelven a guardar: al guardar, EF los cifra.
+    /// </summary>
+    private static async Task CifrarDatosExistentesAsync(ApplicationDbContext db)
+    {
+        // Consultas fijas (sin datos externos): buscan valores que aún no tienen el prefijo "enc:"
+        var usuarios = await db.Database.SqlQuery<string>($"""
+            SELECT Id AS Value FROM AspNetUsers
+            WHERE (Rut IS NOT NULL AND Rut NOT LIKE 'enc:%')
+               OR (Direccion IS NOT NULL AND Direccion NOT LIKE 'enc:%')
+               OR (PhoneNumber IS NOT NULL AND PhoneNumber NOT LIKE 'enc:%')
+            """).ToListAsync();
+        foreach (var u in await db.Users.Where(u => usuarios.Contains(u.Id)).ToListAsync())
+        {
+            var e = db.Entry(u);
+            e.Property(x => x.Rut).IsModified = u.Rut is not null;
+            e.Property(x => x.Direccion).IsModified = u.Direccion is not null;
+            e.Property(x => x.PhoneNumber).IsModified = u.PhoneNumber is not null;
+        }
+
+        var pedidos = await db.Database.SqlQuery<int>($"""
+            SELECT Id AS Value FROM Pedidos
+            WHERE (Telefono IS NOT NULL AND Telefono NOT LIKE 'enc:%')
+               OR (Direccion IS NOT NULL AND Direccion NOT LIKE 'enc:%')
+            """).ToListAsync();
+        foreach (var p in await db.Pedidos.Where(p => pedidos.Contains(p.Id)).ToListAsync())
+        {
+            var e = db.Entry(p);
+            e.Property(x => x.Telefono).IsModified = p.Telefono is not null;
+            e.Property(x => x.Direccion).IsModified = p.Direccion is not null;
+        }
+
+        var mensajes = await db.Database.SqlQuery<int>($"""
+            SELECT Id AS Value FROM MensajesContacto WHERE Telefono IS NOT NULL AND Telefono NOT LIKE 'enc:%'
+            """).ToListAsync();
+        foreach (var m in await db.MensajesContacto.Where(m => mensajes.Contains(m.Id)).ToListAsync())
+            db.Entry(m).Property(x => x.Telefono).IsModified = true;
+
+        await db.SaveChangesAsync();
     }
 
     /// <summary>
@@ -158,6 +201,15 @@ public static class SeedData
                 CREATE INDEX IX_Pedidos_UsuarioId ON Pedidos(UsuarioId);
                 ALTER TABLE Pedidos ADD CONSTRAINT FK_Pedidos_AspNetUsers_UsuarioId FOREIGN KEY (UsuarioId) REFERENCES AspNetUsers(Id);
             END
+            """);
+
+        // Columnas cifradas: el texto cifrado es más largo que el original
+        await db.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('AspNetUsers', 'Rut') < 1000 ALTER TABLE AspNetUsers ALTER COLUMN Rut nvarchar(500) NULL;
+            IF COL_LENGTH('AspNetUsers', 'Direccion') < 1000 ALTER TABLE AspNetUsers ALTER COLUMN Direccion nvarchar(500) NULL;
+            IF COL_LENGTH('Pedidos', 'Telefono') < 1000 ALTER TABLE Pedidos ALTER COLUMN Telefono nvarchar(500) NULL;
+            IF COL_LENGTH('Pedidos', 'Direccion') < 1000 ALTER TABLE Pedidos ALTER COLUMN Direccion nvarchar(500) NULL;
+            IF COL_LENGTH('MensajesContacto', 'Telefono') < 1000 ALTER TABLE MensajesContacto ALTER COLUMN Telefono nvarchar(500) NULL;
             """);
 
         // Reseñas de ejemplo: sin usuario y con nombre visible
