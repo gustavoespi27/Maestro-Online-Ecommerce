@@ -13,15 +13,18 @@ Tienda online de una ferretería chilena **simulada**, desarrollada como proyect
 ## Índice
 
 1. [Funcionalidades](#1-funcionalidades)
-2. [Inicio rápido con Docker (Windows, Mac o Linux)](#2-inicio-rápido-con-docker-windows-mac-o-linux)
-3. [Inicio con .NET instalado en el equipo](#3-inicio-con-net-instalado-en-el-equipo)
-4. [Configuración y secretos](#4-configuración-y-secretos)
-5. [Probar el pago](#5-probar-el-pago)
-6. [Cómo funciona por dentro](#6-cómo-funciona-por-dentro)
-7. [Seguridad](#7-seguridad)
-8. [Estructura del proyecto](#8-estructura-del-proyecto)
-9. [Publicar en producción](#9-publicar-en-producción)
-10. [Créditos](#10-créditos)
+2. [Requisitos](#2-requisitos)
+3. [Puesta en marcha paso a paso](#3-puesta-en-marcha-paso-a-paso)
+4. [Accesos de prueba](#4-accesos-de-prueba)
+5. [Problemas comunes](#5-problemas-comunes)
+6. [Alternativa: Docker](#6-alternativa-docker-windows-mac-o-linux)
+7. [Configuración y secretos](#7-configuración-y-secretos)
+8. [Probar el pago](#8-probar-el-pago)
+9. [Cómo funciona por dentro](#9-cómo-funciona-por-dentro)
+10. [Seguridad](#10-seguridad)
+11. [Estructura del proyecto](#11-estructura-del-proyecto)
+12. [Publicar en producción](#12-publicar-en-producción)
+13. [Créditos](#13-créditos)
 
 ---
 
@@ -53,9 +56,91 @@ Tienda online de una ferretería chilena **simulada**, desarrollada como proyect
 
 ---
 
-## 2. Inicio rápido con Docker (Windows, Mac o Linux)
+## 2. Requisitos
 
-Es la forma más simple: **no necesitas instalar .NET ni SQL Server**, solo [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+Para probarlo en Windows (la forma recomendada y probada) necesitas instalar:
+
+| Programa | Para qué | Dónde se obtiene | Cómo comprobar que está |
+|---|---|---|---|
+| **Git** | Descargar el proyecto | <https://git-scm.com/download/win> | `git --version` |
+| **.NET 8 SDK** | Compilar y ejecutar la tienda | <https://dotnet.microsoft.com/download/dotnet/8.0> (elige **SDK 8.0.x**, no solo "Runtime") | `dotnet --list-sdks` → debe aparecer una línea `8.0.xxx` |
+| **SQL Server LocalDB** | Base de datos local | Viene con **Visual Studio 2022** (carga de trabajo *"Desarrollo de ASP.NET y web"*) o con el [instalador de SQL Server Express](https://www.microsoft.com/es-es/sql-server/sql-server-downloads) → *Descargar medios* → **LocalDB** | `sqllocaldb info` → debe aparecer `MSSQLLocalDB` |
+| Editor *(opcional)* | Ver y editar el código | Visual Studio 2022 o VS Code con la extensión *C# Dev Kit* | — |
+
+**No hay que instalar nada más.** Los paquetes NuGet (Entity Framework Core 8.0.31 y ASP.NET Core Identity 8.0.31) se descargan solos al compilar, y Bootstrap, jQuery y el resto de las librerías del navegador ya vienen dentro del proyecto (`wwwroot/lib`). La tienda funciona sin internet, salvo el modo Webpay.
+
+> En Mac o Linux no existe LocalDB: usa la [alternativa con Docker](#6-alternativa-docker-windows-mac-o-linux) o un SQL Server en Docker (al final de la sección 3).
+
+---
+
+## 3. Puesta en marcha paso a paso
+
+Abre una terminal (PowerShell) y ejecuta:
+
+```powershell
+# 1. Descargar el proyecto
+git clone https://github.com/gustavoespi27/Maestro-Online-Ecommerce.git
+cd Maestro-Online-Ecommerce/Ferreteria
+
+# 2. Definir la contraseña del administrador (se guarda en tu PC, fuera del proyecto)
+dotnet user-secrets set "Admin:Password" "Admin123!"
+
+# 3. Confiar en el certificado HTTPS de desarrollo (solo la primera vez; Windows pedirá confirmar → "Sí")
+dotnet dev-certs https --trust
+
+# 4. Compilar y arrancar
+dotnet run --launch-profile https
+```
+
+Cuando la consola muestre `Now listening on: https://localhost:7054`, abre **<https://localhost:7054>** en el navegador.
+
+La primera vez la aplicación **crea sola la base de datos** `FerreteriaDb` en LocalDB, con los roles, el administrador, 8 categorías, 26 productos con fotos y reseñas de ejemplo. No hay que ejecutar migraciones ni scripts SQL: si el modelo cambia, la base se actualiza al arrancar sin perder datos (`Data/SeedData.cs → ActualizarEsquemaAsync`). El aviso *"No hay migrations en el proyecto"* que aparece en la consola es normal.
+
+Para detener la tienda: `Ctrl + C` en la terminal. Para volver a iniciarla: `dotnet run --launch-profile https` desde la carpeta `Ferreteria`.
+
+**Si usas SQL Server en Docker en vez de LocalDB** (Mac/Linux), antes del paso 4:
+
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TuClave.Segura123" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=FerreteriaDb;User Id=sa;Password=TuClave.Segura123;TrustServerCertificate=True;MultipleActiveResultSets=true"
+```
+
+---
+
+## 4. Accesos de prueba
+
+| Perfil | Correo | Contraseña | Qué puede hacer |
+|---|---|---|---|
+| **Administrador** | `admin@ferreteria.cl` | `Admin123!` *(la que definiste en el paso 2)* | Entrar al **Panel admin** (<https://localhost:7054/Admin>): inventario y stock en *Productos*, categorías, pedidos y despachos, clientes, mensajes y resultados de la encuesta. |
+| **Cliente** | `cliente@demo.cl` | `Cliente123` | Comprar, ver *Mis pedidos*, editar su perfil y dejar reseñas de productos comprados. **Créala la primera vez** en *Crear cuenta* con esos datos (o con los que quieras). |
+| **Invitado** | — | — | Comprar sin registrarse: agrega productos al carrito y en el checkout continúa como invitado. |
+
+- El pago viene en **modo simulado**: al pagar aparece una pantalla con los botones **Aprobar**, **Rechazar** y **Anular** (no se usa ninguna tarjeta). Para probar el Webpay de pruebas de Transbank, ver la [sección 8](#8-probar-el-pago).
+- Las contraseñas nuevas deben tener **mínimo 8 caracteres, con mayúscula, minúscula y número**.
+- Tras **5 intentos fallidos** la cuenta se bloquea **15 minutos**.
+- Estas claves son solo para pruebas locales. En un servidor real define otra contraseña de administrador (sección 7).
+
+---
+
+## 5. Problemas comunes
+
+| Síntoma | Solución |
+|---|---|
+| `dotnet` no se reconoce como comando | Instala el .NET 8 SDK y **cierra y vuelve a abrir** la terminal (o VS Code). Si persiste, usa la ruta completa: `& "C:\Program Files\dotnet\dotnet.exe" run --launch-profile https`. |
+| `dotnet --list-sdks` no muestra ninguna versión 8.0 | Tienes solo el Runtime o una versión distinta: instala el **SDK 8.0**. |
+| Error de conexión a SQL Server (*"A network-related or instance-specific error"*) | LocalDB no está instalado o está detenido. Comprueba con `sqllocaldb info`; si aparece `MSSQLLocalDB`, inícialo con `sqllocaldb start MSSQLLocalDB`. |
+| El navegador dice *"La conexión no es privada"* | Ejecuta `dotnet dev-certs https --trust`, acepta la ventana de Windows y recarga la página. |
+| *"Address already in use"* / puerto ocupado | Ya hay otra copia de la tienda abierta: ciérrala con `Ctrl + C` en su terminal. |
+| No recuerdo la contraseña del admin | Revísala con `dotnet user-secrets list`. Si no definiste ninguna, la consola muestra una **contraseña temporal** generada al crear la base. |
+| Los formularios dicen *"No pudimos verificar el envío"* | Es la protección contra bots: espera unos segundos después de abrir el formulario y envíalo de nuevo. |
+| *"Demasiadas solicitudes"* (error 429) | Se superó el límite de intentos por IP. Espera unos minutos. |
+| Quiero empezar con la base limpia | Detén la tienda y ejecuta `dotnet tool install --global dotnet-ef` (solo la primera vez) y `dotnet ef database drop`. Al arrancar de nuevo se vuelve a crear. |
+
+---
+
+## 6. Alternativa: Docker (Windows, Mac o Linux)
+
+Si prefieres **no instalar .NET ni SQL Server**, basta con [Docker Desktop](https://www.docker.com/products/docker-desktop/):
 
 ```bash
 git clone https://github.com/gustavoespi27/Maestro-Online-Ecommerce.git
@@ -77,42 +162,7 @@ Abre **http://localhost:8080**. La primera vez tarda un par de minutos: descarga
 
 ---
 
-## 3. Inicio con .NET instalado en el equipo
-
-### Requisitos
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- SQL Server, con una de estas opciones:
-  - **Windows:** SQL Server LocalDB (viene con Visual Studio o se instala con el [instalador de SQL Server Express](https://www.microsoft.com/es-es/sql-server/sql-server-downloads) eligiendo *LocalDB*). Es la opción por defecto y no hay que configurar nada.
-  - **Mac / Linux / cualquiera:** SQL Server en Docker:
-    ```bash
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TuClave.Segura123" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
-    ```
-
-### Pasos
-
-```bash
-git clone https://github.com/gustavoespi27/Maestro-Online-Ecommerce.git
-cd Maestro-Online-Ecommerce/Ferreteria
-
-# Contraseña del administrador (se guarda fuera del proyecto, ver sección 4)
-dotnet user-secrets set "Admin:Password" "TuClave123"
-
-# Solo si NO usas LocalDB (Mac/Linux o SQL Server en Docker):
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=FerreteriaDb;User Id=sa;Password=TuClave.Segura123;TrustServerCertificate=True;MultipleActiveResultSets=true"
-
-dotnet run
-```
-
-Abre la dirección que aparece en la consola (normalmente **http://localhost:5088**).
-
-La primera vez la aplicación crea sola la base de datos, los roles, el administrador, 8 categorías, 26 productos con fotos y reseñas de ejemplo. Si cambias el modelo más adelante, la base existente se actualiza al arrancar sin perder datos (`Data/SeedData.cs → ActualizarEsquemaAsync`).
-
-> Si no defines `Admin:Password`, en desarrollo se crea el administrador con una **contraseña aleatoria que se muestra en la consola** al arrancar.
-
----
-
-## 4. Configuración y secretos
+## 7. Configuración y secretos
 
 **En el repositorio no hay contraseñas ni llaves.** `appsettings.json` solo trae valores no sensibles y deja los secretos vacíos. Para definirlos hay tres opciones (de mayor a menor prioridad):
 
@@ -135,7 +185,7 @@ El archivo `.env` (Docker) también está en `.gitignore`. Para empezar, copia `
 
 ---
 
-## 5. Probar el pago
+## 8. Probar el pago
 
 ### Modo simulado (por defecto)
 
@@ -164,7 +214,7 @@ No necesitas publicar la tienda: Webpay redirige el navegador de vuelta a `local
 
 ---
 
-## 6. Cómo funciona por dentro
+## 9. Cómo funciona por dentro
 
 ### Flujo de compra y pago
 
@@ -205,7 +255,7 @@ Reconoce intenciones por palabras clave (despacho, pagos, devoluciones, seguimie
 
 ---
 
-## 7. Seguridad
+## 10. Seguridad
 
 | # | Medida | Cómo se aplica |
 |---|---|---|
@@ -232,7 +282,9 @@ Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corre
 
 > **Importante sobre el cifrado:** las llaves se guardan en tu perfil de usuario (Windows) o en la carpeta indicada en `Seguridad:DirectorioLlaves` (Docker usa un volumen). Si copias la base de datos a otro equipo sin sus llaves, los datos cifrados se mostrarán como "[dato cifrado no disponible]".
 
-## 8. Estructura del proyecto
+---
+
+## 11. Estructura del proyecto
 
 ```
 ├── Dockerfile · docker-compose.yml · .env.example
@@ -241,6 +293,7 @@ Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corre
     ├── Program.cs                     Configuración: EF Core, Identity, sesión, seguridad, pasarela
     ├── appsettings.json               Configuración pública (sin secretos)
     ├── Models/
+    │   ├── RutChilenoAttribute.cs     Validación de RUT con dígito verificador
     │   ├── Entidades.cs               Usuario, Categoria, Producto, Pedido, Resena, MensajeContacto, RespuestaEncuesta
     │   ├── Encuesta.cs                Instrumento UTAUT (constructos e ítems)
     │   └── ViewModels/                Modelos de las vistas y formularios
@@ -254,7 +307,9 @@ Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corre
     │   ├── Envios.cs                  Tarifas por región, plazos y seguimiento
     │   ├── RecomendacionService.cs    Recomendaciones personalizadas
     │   ├── ChatbotService.cs          Maestro Bot
-    │   ├── Seguridad.cs               Límites por IP, cabeceras y CSP
+    │   ├── Seguridad.cs               Límites por IP, cabeceras, CSP y limpieza de textos
+    │   ├── CifradoDatos.cs            Cifrado de RUT, teléfonos y direcciones en la base
+    │   ├── ProteccionBots.cs          Anti-bots, rol Admin forzado y anulación de pedidos impagos
     │   └── CarritoService.cs · Formato.cs · IdentityErrorDescriberEs.cs
     ├── Controllers/                   Tienda, cuenta, checkout, pago, contacto, chatbot, encuesta, reseñas, info legal, SEO
     ├── Areas/Admin/                   Panel de administración
@@ -264,7 +319,7 @@ Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corre
 
 ---
 
-## 9. Publicar en producción
+## 12. Publicar en producción
 
 - Ejecuta con `ASPNETCORE_ENVIRONMENT=Production` y HTTPS.
 - Define por variables de entorno `ConnectionStrings__DefaultConnection`, `Admin__Password`, `Pagos__Modo=Webpay`, `Pagos__WebpayUrlBase=https://webpay3g.transbank.cl` y las credenciales de producción que entrega Transbank al afiliar el comercio.
@@ -272,7 +327,7 @@ Los puntos *"key pública para la base de datos"* y *"Row-Level Security"* corre
 
 ---
 
-## 10. Créditos
+## 13. Créditos
 
 - Las fotografías de productos y categorías provienen de **Wikimedia Commons** bajo licencias libres (Creative Commons y dominio público). El autor y la licencia de cada imagen están en la página **Créditos de imágenes** del sitio (`/Info/Creditos`) y en `Ferreteria/wwwroot/img/creditos-imagenes.json`.
 - El logo de *El Maestro Online* es una creación original del proyecto. Las marcas de los productos (Bosch, Makita, Stanley, etc.) pertenecen a sus titulares y se mencionan solo para identificar los productos.
