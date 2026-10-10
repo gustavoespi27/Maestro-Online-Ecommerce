@@ -35,7 +35,12 @@ jobs:
             echo "::error::Hay paquetes con vulnerabilidades conocidas"; exit 1
           fi
 
+      # Se usa el binario de gitleaks directamente y se escanea el historial completo: gitleaks-action calcula
+      # el rango desde el padre del primer commit del push, que no existe cuando el push incluye el commit raíz.
       - name: Buscar secretos en el historial de Git
-        uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: "8.24.3"
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" detect --source . --config .gitleaks.toml --redact -v --exit-code 1
