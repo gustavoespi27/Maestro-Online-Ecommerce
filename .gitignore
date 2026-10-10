@@ -26,10 +26,8 @@ Ferreteria/Rubrica/
 .DS_Store
 Thumbs.db
 
-# Configuración local de asistentes de IA (el CLAUDE.md de la raíz SÍ se versiona: es la guía compartida del equipo)
+# Copia local de la guía del proyecto (la de la raíz sí se versiona)
 Ferreteria/CLAUDE.md
-CLAUDE.local.md
-.claude/
 
 # Bases de datos y registros locales
 *.mdf
